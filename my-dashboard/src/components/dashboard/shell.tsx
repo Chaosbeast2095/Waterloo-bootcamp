@@ -3,8 +3,8 @@ import { ArrowRight, Menu, X } from "lucide-react";
 import { useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { Logo } from "./logo";
-import { fmt, pctChange, signed } from "@/lib/format";
-import { compareLabel, hero, intro, kpis, meta } from "@/data/dashboard";
+import { hero, intro, meta } from "@/data/dashboard";
+import { buildFacts } from "./widgets";
 
 export type View = "overview" | "data" | "insights";
 
@@ -115,13 +115,14 @@ export function Navigation({
   );
 }
 
-/* ---------- Scroll-zoom intro: the wordmark, then the headline numbers ---------- */
+/* ---------- Scroll-zoom intro: the wordmark, then a 2 × 2 image grid ---------- */
 
 export function ScrollIntro() {
   const reduce = useReducedMotion();
   const sec = useRef<HTMLElement>(null);
   const title = useRef<HTMLHeadingElement>(null);
-  const stats = useRef<HTMLDivElement>(null);
+  const gallery = useRef<HTMLDivElement>(null);
+  const tiles = useRef<(HTMLElement | null)[]>([]);
   const hint = useRef<HTMLDivElement>(null);
   const grid = useRef<HTMLDivElement>(null);
 
@@ -131,16 +132,20 @@ export function ScrollIntro() {
     const update = () => {
       raf = 0;
       const s = sec.current;
-      if (!s || !title.current || !stats.current || !hint.current || !grid.current) return;
+      if (!s || !title.current || !gallery.current || !hint.current || !grid.current) return;
       const span = Math.max(s.offsetHeight - window.innerHeight, 1);
       const p = clamp(-s.getBoundingClientRect().top / span);
       const a = clamp(p / 0.55);
       title.current.style.transform = `scale(${1 + a * a * 4.2})`;
       title.current.style.opacity = String(1 - clamp((p - 0.2) / 0.28));
-      const b = clamp((p - 0.4) / 0.3);
-      stats.current.style.opacity = String(b);
-      stats.current.style.transform = `translateY(${(1 - b) * 36}px)`;
-      stats.current.style.visibility = b > 0 ? "visible" : "hidden";
+      gallery.current.style.visibility = p > 0.4 ? "visible" : "hidden";
+      // Tiles rise in one after another, reading order.
+      tiles.current.forEach((t, i) => {
+        if (!t) return;
+        const b = clamp((p - 0.4 - i * 0.05) / 0.26);
+        t.style.opacity = String(b);
+        t.style.transform = `translateY(${(1 - b) * 36}px)`;
+      });
       hint.current.style.opacity = String(1 - clamp(p / 0.08));
       grid.current.style.transform = `scale(${1 + p * 0.25})`;
     };
@@ -156,8 +161,6 @@ export function ScrollIntro() {
       cancelAnimationFrame(raf);
     };
   }, [reduce]);
-
-  const head = kpis.slice(0, 3);
 
   return (
     <section ref={sec} id="top" aria-label="Headline" className={cn("relative", reduce ? "" : "h-[260vh]")}>
@@ -177,36 +180,28 @@ export function ScrollIntro() {
         </h1>
 
         <div
-          ref={stats}
-          className={cn(
-            "grid place-content-center justify-items-center px-4 text-center",
-            reduce ? "relative" : "invisible absolute inset-0 opacity-0 will-change-[transform,opacity]",
-          )}
+          ref={gallery}
+          className={cn("grid place-items-center px-4", reduce ? "relative w-full" : "invisible absolute inset-0 pt-16")}
         >
-          <p className="m-0 font-display text-[11px] font-bold uppercase tracking-[0.42em] text-fg/80">
-            {intro.kicker}
-          </p>
-          <div className="mt-11 grid max-w-[940px] grid-cols-1 gap-5 text-left sm:grid-cols-3 sm:gap-[clamp(20px,4vw,56px)]">
-            {head.map((k) => {
-              const c = pctChange(k.value, k.previous);
-              const good = k.goodWhen === "down" ? c < 0 : c > 0;
-              return (
-                <div key={k.label} className="border-t border-fg/15 pt-4">
-                  <div className="num font-display text-[clamp(2rem,5vw,3.6rem)] font-semibold leading-none">
-                    {fmt(k.value, k.format, k.decimals)}
-                  </div>
-                  <div className="mt-3 flex items-center gap-2 text-[12.5px] text-fg/60">
-                    <i className={cn("size-1.5 shrink-0", good ? "bg-sage" : "bg-clay")} />
-                    {k.label} · <span className={good ? "text-sage" : "text-clay"}>{signed(c)}</span>
-                  </div>
-                </div>
-              );
-            })}
+          {/* Images keep their own shape; each is capped at half the free height so both rows fit under the nav. */}
+          <div className="grid w-[min(100%,76rem)] grid-cols-2 place-items-center gap-x-[clamp(1rem,9vw,9rem)] gap-y-[clamp(1rem,4svh,2.5rem)]">
+            {intro.images.map((img, i) => (
+              <figure
+                key={img.src}
+                ref={(el) => {
+                  tiles.current[i] = el;
+                }}
+                className={cn("m-0", !reduce && "opacity-0 will-change-[transform,opacity]")}
+              >
+                <img
+                  src={img.src}
+                  alt={img.alt}
+                  decoding="async"
+                  className="block max-h-[calc((100svh_-_11rem)/2)] w-auto max-w-full"
+                />
+              </figure>
+            ))}
           </div>
-          <p className="mt-11 font-display text-[clamp(1.1rem,2.2vw,1.6rem)] font-medium text-fg">
-            {intro.note}
-          </p>
-          <p className="mt-2 text-[12px] text-fg/45">{compareLabel.replace(/^vs /, "Change vs ")} · {meta.source}</p>
         </div>
 
         {!reduce && (
@@ -307,17 +302,13 @@ export function FloatBar({ go }: { go: (v: View) => void }) {
         show ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-[150%] opacity-0",
       )}
     >
-      {kpis.slice(0, 3).map((k, i) => {
-        const c = pctChange(k.value, k.previous);
-        const good = k.goodWhen === "down" ? c < 0 : c > 0;
-        return (
-          <span key={k.label} className={cn("flex items-center gap-2 whitespace-nowrap pr-4 text-[12.5px] text-muted", i === 2 && "max-[420px]:hidden")}>
-            <i className={cn("size-1.5", good ? "bg-sage" : "bg-clay")} />
-            <span className="max-sm:hidden">{k.label}</span>
-            <b className="num font-semibold text-fg">{fmt(k.value, k.format === "number" ? "compact" : k.format, k.decimals)}</b>
-          </span>
-        );
-      })}
+      {buildFacts().slice(0, 3).map((f, i) => (
+        <span key={f.label} className={cn("flex items-center gap-2 whitespace-nowrap pr-4 text-[12.5px] text-muted", i === 2 && "max-[420px]:hidden")}>
+          <i className="size-1.5 bg-clay" />
+          <span className="max-sm:hidden">{f.short}</span>
+          <b className="num font-semibold text-fg">{f.value}</b>
+        </span>
+      ))}
       <a
         href="#app"
         tabIndex={show ? 0 : -1}

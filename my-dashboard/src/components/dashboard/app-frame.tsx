@@ -1,30 +1,27 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Bell, ChevronDown, LayoutDashboard, RotateCcw, Search, Sparkles, Table2 } from "lucide-react";
+import { Bell, LayoutDashboard, RotateCcw, Search, Sparkles, Table2 } from "lucide-react";
 import { Mark } from "./logo";
-import { ChartLine } from "@/components/ui/chart-line";
 import { cn } from "@/lib/utils";
-import { breakdown, meta, notes, table, trend } from "@/data/dashboard";
-import { DataTable, Donut, Insights, KpiRow, NoteCard, PALETTE, Panel, Segments, Targets, buildInsights } from "./widgets";
+import { hunger, meta, notes, waste } from "@/data/dashboard";
+import { ColumnChart, DataView, FactRow, Insights, Lifeline, NoteCard, SERIES, SupplyChart, buildInsights } from "./widgets";
 import type { View } from "./shell";
 
 const NAV: { id: View; label: string; icon: typeof LayoutDashboard; count?: number }[] = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
-  { id: "data", label: "Data", icon: Table2, count: table.rows.length },
+  { id: "data", label: "Data", icon: Table2 },
   { id: "insights", label: "Insights", icon: Sparkles, count: buildInsights().length },
 ];
 
 const HEAD: Record<View, [string, string]> = {
-  overview: ["Overview", "Here's how the numbers stack up against the targets."],
-  data: ["Data", "Every row behind the charts. Sort any column, search by name."],
-  insights: ["Insights", "What the data says, generated from the figures on this page."],
+  overview: ["Overview", "Food waste, hunger and supply chain losses at a glance."],
+  data: ["Data", "Food waste and hunger across five countries, side by side."],
+  insights: ["Insights", "What the data says, and where AI can cut the waste."],
 };
 
 export function AppFrame({
   view,
   setView,
-  metric,
-  setMetric,
   query,
   setQuery,
   reset,
@@ -37,8 +34,6 @@ export function AppFrame({
   setQuery: (q: string) => void;
   reset: () => void;
 }) {
-  const m = trend.metrics.find((x) => x.id === metric) ?? trend.metrics[0];
-
   return (
     <div
       id="app"
@@ -98,7 +93,7 @@ export function AppFrame({
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search use cases, teams…"
+                placeholder={view === "data" ? "Search countries…" : "Search use cases, teams…"}
                 aria-label="Search"
                 className="w-full min-w-0 bg-transparent text-[12.5px] text-fg outline-none placeholder:text-faint"
               />
@@ -110,7 +105,7 @@ export function AppFrame({
           </div>
         </div>
 
-        <KpiRow />
+        {view !== "data" && <FactRow />}
 
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
@@ -122,62 +117,16 @@ export function AppFrame({
           >
             {view === "overview" && (
               <div className="grid gap-4">
-                <div className="grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)]">
-                  <ChartLine
-                    title={m.label}
-                    description={m.description}
-                    data={trend.rows}
-                    index={trend.index}
-                    series={m.series}
-                    valueFormat={m.format}
-                    currency={meta.currency}
-                    decimals={"decimals" in m ? m.decimals : undefined}
-                    yMin={"yMin" in m ? m.yMin : undefined}
-                    yMax={"yMax" in m ? m.yMax : undefined}
-                    goodWhen={"goodWhen" in m ? m.goodWhen : "up"}
-                    palette={PALETTE}
-                    surface="light"
-                    height={250}
-                    icon={null}
-                    action={
-                      <label className="relative inline-flex items-center">
-                        <span className="sr-only">Metric</span>
-                        <select
-                          value={m.id}
-                          onChange={(e) => setMetric(e.target.value)}
-                          className="h-8 cursor-pointer appearance-none border border-line-2 bg-raised py-0 pl-3 pr-8 text-xs text-fg outline-none transition-colors hover:border-fg/30"
-                        >
-                          {trend.metrics.map((x) => (
-                            <option key={x.id} value={x.id} className="bg-card">
-                              {x.label}
-                            </option>
-                          ))}
-                        </select>
-                        <ChevronDown className="pointer-events-none absolute right-2.5 size-3.5 text-muted" />
-                      </label>
-                    }
-                  />
-                  <Panel
-                    title={breakdown.title}
-                    action={
-                      <button type="button" onClick={() => setView("data")} className="cursor-pointer text-xs text-muted transition-colors hover:text-fg">
-                        View all
-                      </button>
-                    }
-                  >
-                    <Donut />
-                  </Panel>
+                <Lifeline />
+                <div className="grid gap-4 xl:grid-cols-2">
+                  <ColumnChart data={waste} color={SERIES.waste} />
+                  <ColumnChart data={hunger} color={SERIES.hunger} />
                 </div>
-                <div className="grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)]">
-                  <Segments query={query} />
-                  <div className="flex min-w-0 flex-col gap-4">
-                    <Targets />
-                    {notes[0] && <NoteCard note={notes[0]} compact />}
-                  </div>
-                </div>
+                <SupplyChart />
+                {notes[0] && <NoteCard note={notes[0]} compact />}
               </div>
             )}
-            {view === "data" && <DataTable query={query} />}
+            {view === "data" && <DataView query={query} />}
             {view === "insights" && <Insights />}
           </motion.div>
         </AnimatePresence>

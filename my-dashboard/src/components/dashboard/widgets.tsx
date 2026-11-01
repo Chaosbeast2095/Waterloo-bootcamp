@@ -2,9 +2,6 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { animate, motion, useInView, useMotionValue, useReducedMotion } from "motion/react";
 import {
   Activity,
-  ArrowDown,
-  ArrowUp,
-  ArrowUpDown,
   Bot,
   Clock,
   Gauge,
@@ -16,20 +13,27 @@ import {
   Zap,
   type LucideIcon,
 } from "lucide-react";
+import { BR, CA, GB, IN, KE } from "country-flag-icons/react/3x2";
 import { cn } from "@/lib/utils";
 import { fmt, pctChange, signed } from "@/lib/format";
 import {
   breakdown,
   compareLabel,
+  aiPlays,
+  hunger,
+  lifeline,
   kpis,
   notes,
   segments,
-  table,
+  supplyChain,
   targets,
-  trend,
+  waste,
+  type Flag,
+  type Heat,
   type Fmt,
   type IconName,
   type Kpi,
+  type Ranking,
 } from "@/data/dashboard";
 
 export const ICONS: Record<IconName, LucideIcon> = {
@@ -458,85 +462,233 @@ export function Targets() {
   );
 }
 
-/* ---------- Sortable table ---------- */
+/* ---------- Data view: waste vs hunger, ranked boxes + column charts ---------- */
 
-type Row = (typeof table.rows)[number];
-const textKeys = table.columns.filter((c) => !c.format).map((c) => c.key);
+const FLAGS = { IN, BR, KE, CA, GB };
+/** Series colours for the two columns (validated as a pair; every bar is direct-labelled). */
+export const SERIES = { waste: PALETTE[0], hunger: "#2F7A4F" };
+const CHART_H = 180;
 
-export function DataTable({ query }: { query: string }) {
-  const [sort, setSort] = useState<{ key: string; dir: 1 | -1 }>({ key: table.columns[2].key, dir: -1 });
+const has = (q: string, ...s: string[]) => !q || s.some((x) => x.toLowerCase().includes(q));
+const ordinal = (n: number) => (n === 1 ? "st" : n === 2 ? "nd" : n === 3 ? "rd" : "th");
+
+function FlagIcon({ code, className }: { code: Flag; className?: string }) {
+  const F = FLAGS[code];
+  return <F aria-hidden className={cn("h-[14px] w-[21px] shrink-0 shadow-[0_0_0_1px_rgba(13,60,38,0.14)]", className)} />;
+}
+
+function RankBox({ data, color, query }: { data: Ranking; color: string; query: string }) {
+  const reduce = useReducedMotion();
   const q = query.trim().toLowerCase();
-  const rows = useMemo(() => {
-    const r = table.rows.filter(
-      (row) => !q || textKeys.some((k) => String(row[k as keyof Row]).toLowerCase().includes(q)),
-    );
-    return [...r].sort((a, b) => {
-      const av = a[sort.key as keyof Row];
-      const bv = b[sort.key as keyof Row];
-      if (typeof av === "number" && typeof bv === "number") return (av - bv) * sort.dir;
-      return String(av).localeCompare(String(bv)) * sort.dir;
-    });
-  }, [q, sort]);
-
-  const maxOf = (k: string) => Math.max(...table.rows.map((r) => Number(r[k as keyof Row]) || 0));
-
+  const max = Math.max(...data.rows.map((r) => r.value ?? 0));
+  const rows = data.rows
+    .map((r, i) => ({ ...r, rank: r.value === null ? null : i + 1 }))
+    .filter((r) => has(q, r.country));
   return (
-    <Panel title={table.title} action={<span className="text-[11.5px] text-faint">{table.note}</span>}>
-      <div className="scroll-thin -mx-5 overflow-x-auto px-5">
-        <table className="w-full min-w-[680px] border-collapse text-[13px]">
-          <thead>
-            <tr>
-              {table.columns.map((c, i) => {
-                const on = sort.key === c.key;
-                const Icon = !on ? ArrowUpDown : sort.dir === 1 ? ArrowUp : ArrowDown;
-                return (
-                  <th
-                    key={c.key}
-                    aria-sort={on ? (sort.dir === 1 ? "ascending" : "descending") : "none"}
-                    className={cn("border-b border-line p-0 font-medium", i === 0 ? "text-left" : "text-right")}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => setSort((s) => ({ key: c.key, dir: s.key === c.key ? ((-s.dir) as 1 | -1) : -1 }))}
-                      className={cn(
-                        "inline-flex w-full cursor-pointer items-center gap-1.5 px-3.5 py-3 text-[11px] uppercase tracking-[0.08em] transition-colors",
-                        i === 0 ? "justify-start" : "justify-end",
-                        on ? "text-clay" : "text-faint hover:text-fg",
-                      )}
+    <section className="flex min-w-0 flex-col rounded-2xl! border border-line bg-card p-5 sm:p-6">
+      {/* Rows spread to fill the box so both boxes line up. */}
+      <ol className="m-0 flex flex-1 list-none flex-col justify-between gap-5 p-0">
+        {rows.map((r) => (
+          <li key={r.country} className="flex items-center gap-4">
+            <span
+              className={cn(
+                "num grid size-12 shrink-0 place-items-center rounded-full! border text-[15px] font-semibold leading-none",
+                r.rank === 1 ? "border-transparent text-card" : "border-line-2 bg-frame text-fg",
+                r.rank === null && "border-dashed bg-transparent text-faint",
+              )}
+              style={r.rank === 1 ? { background: color } : undefined}
+            >
+              {r.rank === null ? (
+                "–"
+              ) : (
+                <span>
+                  {r.rank}
+                  <sup className="ml-px text-[9px] font-medium">{ordinal(r.rank)}</sup>
+                </span>
+              )}
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between gap-3">
+                <span className="flex min-w-0 items-center gap-2.5 text-[14px] font-medium text-fg">
+                  <FlagIcon code={r.flag} />
+                  <span className="truncate">{r.country}</span>
+                </span>
+                {r.value === null ? (
+                  <span className="whitespace-nowrap text-[12.5px] text-faint">{data.missing}</span>
+                ) : (
+                  <span className="num whitespace-nowrap text-[14px] font-semibold text-fg">{fmt(r.value, data.format)}</span>
+                )}
+              </div>
+              <div className="mt-2 h-1.5 bg-fg/[0.07]">
+                {r.value !== null && (
+                  <motion.div
+                    className="h-full origin-left"
+                    style={{ width: `${(r.value / max) * 100}%`, background: color }}
+                    initial={reduce ? false : { scaleX: 0 }}
+                    animate={{ scaleX: 1 }}
+                    transition={{ duration: 0.9, ease: EASE, delay: 0.1 + (r.rank ?? 0) * 0.07 }}
+                  />
+                )}
+              </div>
+              {r.share !== undefined && <div className="num mt-1.5 text-[11.5px] text-muted">{r.share.toFixed(1)}% of population</div>}
+            </div>
+          </li>
+        ))}
+      </ol>
+      {!rows.length && <p className="py-8 text-center text-[12.5px] text-muted">Nothing matches “{query}”.</p>}
+      <div className="mt-6 border-l-2 pl-3" style={{ borderColor: color }}>
+        <p className="text-[13px] font-medium leading-snug text-fg text-pretty">{data.conclusion}</p>
+        <p className="mt-1 text-[11.5px] leading-relaxed text-faint text-pretty">{data.footnote}</p>
+      </div>
+    </section>
+  );
+}
+
+export function ColumnChart({ data, color }: { data: Ranking; color: string }) {
+  const reduce = useReducedMotion();
+  const max = Math.max(...data.rows.map((r) => r.value ?? 0));
+  const cols = { gridTemplateColumns: `repeat(${data.rows.length}, minmax(0, 1fr))` };
+  return (
+    <figure className="m-0 min-w-0 rounded-2xl! border border-line bg-card p-5 sm:p-6">
+      <figcaption className="text-[13.5px] font-semibold text-fg">
+        {data.chartTitle} <span className="font-normal text-muted">· {data.unit}</span>
+      </figcaption>
+      <div className="mt-4 flex gap-2">
+        <div className="flex w-4 shrink-0 items-center justify-center pb-12">
+          <span className="-rotate-90 whitespace-nowrap text-[10px] uppercase tracking-[0.16em] text-faint">{data.unit}</span>
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="grid border-b border-l border-line-2" style={{ ...cols, height: CHART_H + 28 }}>
+            {data.rows.map((r, i) => {
+              const label = r.value === null ? (data.missing ?? "No data") : fmt(r.value, data.format);
+              return (
+                <div
+                  key={r.country}
+                  tabIndex={0}
+                  aria-label={`${r.country}: ${label}${r.share !== undefined ? `, ${r.share.toFixed(1)}% of population` : ""}`}
+                  className="group flex flex-col items-center justify-end outline-none"
+                >
+                  {/* Label, bar and tooltip move together so the tooltip sits on the bar. */}
+                  <div className="relative flex flex-col items-center">
+                    <div
+                      role="tooltip"
+                      className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1 -translate-x-1/2 translate-y-1 whitespace-nowrap border border-line-2 bg-card px-2.5 py-1.5 text-[11.5px] opacity-0 shadow-[0_10px_24px_-12px_rgba(13,60,38,0.4)] transition-[opacity,transform] duration-200 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100"
                     >
-                      {c.label}
-                      <Icon className={cn("size-3", on ? "opacity-100" : "opacity-50")} />
-                    </button>
-                  </th>
-                );
-              })}
+                      <div className="flex items-center gap-1.5 font-semibold text-fg">
+                        <FlagIcon code={r.flag} className="h-[10px] w-[15px]" />
+                        {r.country}
+                      </div>
+                      <div className="num text-muted">
+                        {r.value === null ? label : `${label} ${data.unit.toLowerCase()}`}
+                        {r.share !== undefined && ` · ${r.share.toFixed(1)}%`}
+                      </div>
+                    </div>
+                    <span className={cn("num mb-1.5 text-[11.5px] font-semibold", r.value === null ? "font-normal text-faint" : "text-fg")}>
+                      {r.value === null ? "n/a" : label}
+                    </span>
+                    {r.value !== null && (
+                      <motion.div
+                        className="w-6 origin-bottom rounded-t-[4px]! transition-[filter] duration-200 group-hover:brightness-110 group-focus-visible:brightness-110"
+                        style={{ height: Math.max((r.value / max) * CHART_H, 2), background: color }}
+                        initial={reduce ? false : { scaleY: 0 }}
+                        whileInView={{ scaleY: 1 }}
+                        viewport={{ once: true, amount: 0.6 }}
+                        transition={{ duration: 0.8, ease: EASE, delay: i * 0.07 }}
+                      />
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="grid pt-2.5" style={cols}>
+            {data.rows.map((r) => (
+              <div key={r.country} className="flex flex-col items-center gap-1 text-[11.5px] text-muted">
+                <FlagIcon code={r.flag} />
+                {r.country}
+              </div>
+            ))}
+          </div>
+          <div className="mt-2 text-center text-[10px] uppercase tracking-[0.16em] text-faint">Countries</div>
+        </div>
+      </div>
+    </figure>
+  );
+}
+
+export function DataView({ query }: { query: string }) {
+  const cols = [
+    { data: waste, color: SERIES.waste },
+    { data: hunger, color: SERIES.hunger },
+  ];
+  return (
+    // Subgrid keeps heading / box / chart rows level across both columns.
+    <div className="grid gap-x-4 gap-y-8 xl:grid-cols-2 xl:grid-rows-[auto_1fr_auto]">
+      {cols.map(({ data, color }) => (
+        <div key={data.heading} className="grid min-w-0 gap-3 xl:row-span-3 xl:grid-rows-subgrid">
+          <h3 className="flex items-center gap-2.5 text-[17px] font-semibold tracking-tight text-fg">
+            <i className="size-2.5 rounded-full!" style={{ background: color }} />
+            {data.heading}
+            <span className="font-normal text-muted">({data.unit})</span>
+          </h3>
+          <RankBox data={data} color={color} query={query} />
+          <ColumnChart data={data} color={color} />
+        </div>
+      ))}
+      <div className="grid min-w-0 gap-3 xl:col-span-2">
+        <h3 className="flex items-center gap-2.5 text-[17px] font-semibold tracking-tight text-fg">
+          <i className="size-2.5 rounded-full!" style={{ background: SUPPLY.lost }} />
+          {supplyChain.heading}
+          <span className="font-normal text-muted">({supplyChain.unit})</span>
+        </h3>
+        <SupplyTable />
+        <SupplyChart />
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Supply chain: Dataset 2 table + stacked columns ---------- */
+
+/** Cell highlights exactly as marked on the dataset; no other cell is coloured. */
+const HEAT: Record<Heat, string> = {
+  red: "bg-[#f7d4cc] text-[#8f2a16]",
+  orange: "bg-[#fbe1c6] text-[#87470c]",
+  yellow: "bg-[#f8eeb4] text-[#625307]",
+};
+const SUPPLY = { kept: "#B9CBBE", lost: PALETTE[0] };
+const STAGE_COLS = [
+  { key: "entering", label: "Food entering (t)" },
+  { key: "lost", label: "Food lost (t)" },
+  { key: "waste", label: "Waste (%)" },
+] as const;
+
+export function SupplyTable() {
+  return (
+    <section className="min-w-0 overflow-hidden rounded-2xl! border border-line bg-card">
+      <div className="scroll-thin overflow-x-auto">
+        <table className="w-full min-w-[560px] border-collapse text-[13px]">
+          <thead>
+            <tr className="bg-fg text-card">
+              <th className="px-5 py-3.5 text-left text-[12px] font-semibold">Supply chain stage</th>
+              {STAGE_COLS.map((c) => (
+                <th key={c.key} className="px-5 py-3.5 text-right text-[12px] font-semibold">
+                  {c.label}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
-              <tr key={String(row[table.columns[0].key as keyof Row])} className="transition-colors duration-200 hover:bg-fg/[0.03]">
-                {table.columns.map((c, i) => {
-                  const v = row[c.key as keyof Row];
-                  if (!c.format)
-                    return (
-                      <td key={c.key} className="border-b border-line px-3.5 py-3 text-left font-medium text-fg">
-                        {String(v)}
-                      </td>
-                    );
-                  const n = Number(v);
-                  const isSigned = "signed" in c && c.signed;
-                  const top = !isSigned && n === maxOf(c.key);
+            {supplyChain.rows.map((r) => (
+              <tr key={r.stage} className="border-b border-line transition-colors last:border-b-0 hover:bg-fg/[0.03]">
+                <td className="px-5 py-3 font-medium text-fg">{r.stage}</td>
+                {STAGE_COLS.map((c) => {
+                  const heat = r.mark[c.key];
                   return (
-                    <td
-                      key={c.key}
-                      className={cn(
-                        "num whitespace-nowrap border-b border-line px-3.5 py-3 text-right",
-                        isSigned ? (n >= 0 ? "text-sage" : "text-clay") : top ? "text-fg" : "text-fg/70",
-                        i === 0 && "text-left",
-                      )}
-                    >
-                      {isSigned ? signed(n) : fmt(n, c.format, "decimals" in c ? c.decimals : undefined)}
-                      {top && <i className="ml-1.5 inline-block size-1.5 -translate-y-px bg-clay align-middle" title="Highest" />}
+                    <td key={c.key} className="px-5 py-2 text-right">
+                      <span className={cn("num inline-block rounded-md! px-2.5 py-1", heat ? `${HEAT[heat]} font-semibold` : "text-fg/80")}>
+                        {c.key === "waste" ? `${r.waste}%` : fmt(r[c.key])}
+                      </span>
                     </td>
                   );
                 })}
@@ -544,9 +696,259 @@ export function DataTable({ query }: { query: string }) {
             ))}
           </tbody>
         </table>
-        {!rows.length && <p className="py-8 text-center text-[12.5px] text-muted">Nothing matches “{query}”.</p>}
       </div>
-    </Panel>
+    </section>
+  );
+}
+
+export function SupplyChart() {
+  const reduce = useReducedMotion();
+  const max = Math.max(...supplyChain.rows.map((r) => r.entering));
+  const cols = { gridTemplateColumns: `repeat(${supplyChain.rows.length}, minmax(0, 1fr))` };
+  const px = (v: number) => (v / max) * CHART_H;
+  return (
+    <figure className="m-0 min-w-0 rounded-2xl! border border-line bg-card p-5 sm:p-6">
+      <figcaption className="flex flex-wrap items-start justify-between gap-3">
+        <span>
+          <span className="block text-[13.5px] font-semibold text-fg">{supplyChain.chartTitle}</span>
+          <span className="text-[12px] text-muted">{supplyChain.caption}</span>
+        </span>
+        <span className="flex items-center gap-4 text-[11.5px] text-muted">
+          <span className="flex items-center gap-1.5">
+            <i className="size-2.5 rounded-full!" style={{ background: SUPPLY.kept }} /> Passed on
+          </span>
+          <span className="flex items-center gap-1.5">
+            <i className="size-2.5 rounded-full!" style={{ background: SUPPLY.lost }} /> Lost
+          </span>
+        </span>
+      </figcaption>
+      <div className="mt-4 flex gap-2">
+        <div className="flex w-4 shrink-0 items-center justify-center pb-14">
+          <span className="-rotate-90 whitespace-nowrap text-[10px] uppercase tracking-[0.16em] text-faint">Tonnes</span>
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="grid border-b border-l border-line-2" style={{ ...cols, height: CHART_H + 28 }}>
+            {supplyChain.rows.map((r, i) => (
+              <div
+                key={r.stage}
+                tabIndex={0}
+                aria-label={`${r.stage}: ${fmt(r.entering)} t entering, ${fmt(r.lost)} t lost (${r.waste}%)`}
+                className="group flex flex-col items-center justify-end outline-none"
+              >
+                <div className="relative flex flex-col items-center">
+                  <div
+                    role="tooltip"
+                    className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1 -translate-x-1/2 translate-y-1 whitespace-nowrap border border-line-2 bg-card px-2.5 py-1.5 text-[11.5px] opacity-0 shadow-[0_10px_24px_-12px_rgba(13,60,38,0.4)] transition-[opacity,transform] duration-200 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100"
+                  >
+                    <div className="font-semibold text-fg">{r.stage}</div>
+                    <div className="num text-muted">
+                      {fmt(r.entering)} t in · {fmt(r.lost)} t lost · {r.waste}%
+                    </div>
+                  </div>
+                  <span className="num mb-1.5 text-[11.5px] font-semibold text-fg">{fmt(r.entering)}</span>
+                  <motion.div
+                    className="flex w-7 origin-bottom flex-col gap-[2px] group-hover:brightness-105"
+                    initial={reduce ? false : { scaleY: 0 }}
+                    whileInView={{ scaleY: 1 }}
+                    viewport={{ once: true, amount: 0.6 }}
+                    transition={{ duration: 0.8, ease: EASE, delay: i * 0.07 }}
+                  >
+                    <div className="rounded-t-[4px]!" style={{ height: px(r.lost), background: SUPPLY.lost }} />
+                    <div style={{ height: px(r.entering - r.lost) - 2, background: SUPPLY.kept }} />
+                  </motion.div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="grid pt-2.5" style={cols}>
+            {supplyChain.rows.map((r) => (
+              <div key={r.stage} className="flex flex-col items-center px-0.5 text-center text-[11.5px] leading-tight">
+                <span className="text-fg/80">{r.short}</span>
+                <span className="num mt-0.5 text-faint">−{r.lost} t</span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-2 text-center text-[10px] uppercase tracking-[0.16em] text-faint">Supply chain stage</div>
+        </div>
+      </div>
+    </figure>
+  );
+}
+
+/* ---------- Overview: NEXUS Harvest Lifeline pitch, in circles ---------- */
+
+function Ring({ pct, color, size = 112, stroke = 9, children }: { pct: number; color: string; size?: number; stroke?: number; children: ReactNode }) {
+  const reduce = useReducedMotion();
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  return (
+    <div className="relative grid shrink-0 place-items-center" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="absolute inset-0 -rotate-90" aria-hidden>
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgb(13 60 38 / 0.08)" strokeWidth={stroke} />
+        <motion.circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke={color}
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          strokeDasharray={c}
+          initial={{ strokeDashoffset: reduce ? c * (1 - pct / 100) : c }}
+          animate={{ strokeDashoffset: c * (1 - pct / 100) }}
+          transition={{ duration: 1.2, ease: EASE }}
+        />
+      </svg>
+      <div className="relative text-center">{children}</div>
+    </div>
+  );
+}
+
+const Badge = ({ children, solid }: { children: ReactNode; solid?: boolean }) => (
+  <span
+    className={cn(
+      "num grid size-10 shrink-0 place-items-center rounded-full! border text-[14px] font-semibold",
+      solid ? "border-transparent bg-clay text-card" : "border-line-2 bg-frame text-fg",
+    )}
+  >
+    {children}
+  </span>
+);
+
+export function Lifeline() {
+  const L = lifeline;
+  return (
+    <div className="grid gap-4">
+      {/* Pitch */}
+      <section className="relative overflow-hidden rounded-2xl! bg-fg px-6 py-7 text-card sm:px-8">
+        <div aria-hidden className="pointer-events-none absolute -right-24 -top-24 size-72 rounded-full! border-[28px] border-clay/25" />
+        <div aria-hidden className="pointer-events-none absolute -bottom-16 right-28 size-40 rounded-full! border-[18px] border-card/10" />
+        <div className="relative max-w-3xl">
+          <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-clay">
+            <Sparkles className="size-3.5" /> Our recommendation
+          </div>
+          <h3 className="mt-3 text-[clamp(1.5rem,3vw,2.1rem)] font-semibold leading-tight tracking-tight">{L.name}</h3>
+          <p className="mt-1 text-[15px] text-card/75">{L.tagline}</p>
+          <blockquote className="m-0 mt-5 border-l-2 border-clay pl-4 text-[17px] font-medium italic leading-snug text-card/95">
+            “{L.quote}”
+          </blockquote>
+          <p className="mt-5 text-[13.5px] leading-relaxed text-card/80 text-pretty">{L.pitch}</p>
+        </div>
+      </section>
+
+      {/* The case, in three rings */}
+      <div className="grid gap-4 md:grid-cols-3">
+        {L.stats.map((st, i) => (
+          <div key={st.label} className="flex items-center gap-5 rounded-2xl! border border-line bg-card p-5">
+            <Ring pct={st.pct} color={i === 0 ? PALETTE[0] : i === 1 ? SERIES.hunger : PALETTE[2]}>
+              <div className="num text-[19px] font-semibold leading-none tracking-tight text-fg">{st.value}</div>
+            </Ring>
+            <div className="min-w-0">
+              <div className="text-[13.5px] font-semibold leading-snug text-fg">{st.label}</div>
+              <div className="mt-1 text-[11.5px] text-faint">{st.ring}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Three capabilities */}
+      <section className="rounded-2xl! border border-line bg-card p-5 sm:p-6">
+        <h4 className="text-[14.5px] font-semibold text-fg">Three AI capabilities, one system</h4>
+        <div className="mt-5 grid gap-6 sm:grid-cols-3">
+          {L.capabilities.map((c, i) => (
+            <div key={c.title} className="flex flex-col items-center text-center">
+              <Ring pct={100 * ((i + 1) / 3)} color={PALETTE[0]} size={84} stroke={7}>
+                <span className="num text-[20px] font-semibold text-fg">{i + 1}</span>
+              </Ring>
+              <div className="mt-3 text-[14px] font-semibold text-fg">{c.title}</div>
+              <p className="mt-1 max-w-[16rem] text-[12.5px] text-muted">{c.body}</p>
+            </div>
+          ))}
+        </div>
+        <p className="mt-6 border-t border-line pt-4 text-[12.5px] leading-relaxed text-muted text-pretty">{L.approach}</p>
+      </section>
+
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+        {/* Five solutions */}
+        <section className="rounded-2xl! border border-line bg-card p-5 sm:p-6">
+          <h4 className="text-[14.5px] font-semibold text-fg">The five solutions, by priority</h4>
+          <ol className="m-0 mt-4 grid list-none gap-0 p-0">
+            {L.solutions.map((s, i) => (
+              <li key={s.name} className="flex items-center gap-4 border-b border-line py-3 last:border-b-0">
+                <Badge solid={i === 0}>{i + 1}</Badge>
+                <div className="min-w-0">
+                  <div className="text-[14px] font-semibold text-fg">{s.name}</div>
+                  <div className="text-[12.5px] text-muted">{s.problem}</div>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        {/* Investment + rollout */}
+        <section className="flex flex-col rounded-2xl! border border-line bg-card p-5 sm:p-6">
+          <h4 className="text-[14.5px] font-semibold text-fg">Investment and rollout</h4>
+          <div className="mt-4 flex items-center gap-4">
+            <Ring pct={100} color={SERIES.hunger} size={96} stroke={8}>
+              <span className="num text-[20px] font-semibold text-fg">{L.investment}</span>
+            </Ring>
+            <p className="text-[12.5px] leading-relaxed text-muted">The challenge's $1 million USD, invested in a measurable Indian pilot first.</p>
+          </div>
+          <ol className="m-0 mt-5 grid list-none gap-0 p-0">
+            {L.rollout.map((r, i) => (
+              <li key={r.step} className="relative flex items-center gap-3 pb-4 last:pb-0">
+                {i < L.rollout.length - 1 && <span aria-hidden className="absolute left-5 top-10 h-[calc(100%-2.5rem)] w-px bg-line-2" />}
+                <Badge solid={i === 0}>{i + 1}</Badge>
+                <FlagIcon code={r.flag} />
+                <div>
+                  <div className="text-[13.5px] font-semibold text-fg">{r.step}</div>
+                  <div className="text-[11.5px] text-faint">{r.note}</div>
+                </div>
+              </li>
+            ))}
+          </ol>
+          <p className="mt-auto border-t border-line pt-4 text-[12px] leading-relaxed text-muted text-pretty">{L.angle}</p>
+        </section>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Headline facts (Overview, Insights, float bar) ---------- */
+
+export function buildFacts() {
+  const wasteTotal = waste.rows.reduce((t, r) => t + (r.value ?? 0), 0);
+  const hungry = hunger.rows.filter((r) => r.value !== null);
+  const hungerTotal = hungry.reduce((t, r) => t + (r.value ?? 0), 0);
+  const topShare = [...hungry].sort((a, b) => (b.share ?? 0) - (a.share ?? 0))[0];
+  const lost = supplyChain.rows.reduce((t, r) => t + r.lost, 0);
+  const start = supplyChain.rows[0].entering;
+  const worst = [...supplyChain.rows].sort((a, b) => b.waste - a.waste)[0];
+  return [
+    { label: "Food wasted · 5 countries", short: "Wasted", value: `${fmt(wasteTotal)} t`, note: `${waste.rows[0].country} alone: ${fmt(waste.rows[0].value ?? 0)} t`, icon: "leaf" as const },
+    { label: "Undernourished people", short: "Hungry", value: fmt(hungerTotal, "compact"), note: `${topShare.country}: ${topShare.share?.toFixed(1)}% of population`, icon: "users" as const },
+    { label: "Lost from farm to fork", short: "Lost", value: `${Math.round((lost / start) * 100)}%`, note: `${fmt(lost)} t of ${fmt(start)} t`, icon: "activity" as const },
+    { label: "Leakiest stage", short: worst.short, value: `${worst.waste}%`, note: `${worst.stage}: ${worst.lost} t lost`, icon: "target" as const },
+  ];
+}
+
+export function FactRow() {
+  return (
+    <div className="mb-4 grid grid-cols-2 gap-3 xl:grid-cols-4">
+      {buildFacts().map((f, i) => {
+        const Icon = ICONS[f.icon];
+        return (
+          <div key={f.label} className="group relative min-w-0 border border-line bg-card px-4 pb-3.5 pt-4 transition-colors duration-300 hover:border-line-2 hover:bg-white/60">
+            <div className="truncate pr-9 text-xs text-muted sm:pr-12">{f.label}</div>
+            <div className="num mt-1 whitespace-nowrap text-xl font-semibold tracking-tight text-fg sm:text-2xl">{f.value}</div>
+            <div className="mt-1.5 truncate text-[11.5px] text-muted">{f.note}</div>
+            <span className={cn("absolute right-3 top-3 grid size-7 place-items-center transition-transform duration-500 ease-out-expo group-hover:-translate-y-0.5 sm:right-4 sm:top-4 sm:size-9", TONES[i % TONES.length])}>
+              <Icon className="size-[17px]" strokeWidth={2} />
+            </span>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
@@ -554,73 +956,50 @@ export function DataTable({ query }: { query: string }) {
 
 export function buildInsights() {
   const out: { tag: string; title: string; figure: string; body: string; tone: "good" | "bad" | "neutral" }[] = [];
-
-  const movers = kpis
-    .map((k) => ({ k, c: pctChange(k.value, k.previous) }))
-    .sort((a, b) => Math.abs(b.c) - Math.abs(a.c));
-  if (movers[0]) {
-    const { k, c } = movers[0];
-    const good = k.goodWhen === "down" ? c < 0 : c > 0;
+  const [w1, w2] = waste.rows;
+  const wasteTotal = waste.rows.reduce((t, r) => t + (r.value ?? 0), 0);
+  out.push({
+    tag: "Waste",
+    title: `${w1.country} wastes the most food`,
+    figure: `${fmt(w1.value ?? 0)} t`,
+    body: `More than double ${w2.country} (${fmt(w2.value ?? 0)} t), the next highest. The five countries waste ${fmt(wasteTotal)} t a year between them.`,
+    tone: "bad",
+  });
+  const share = [...hunger.rows].sort((a, b) => (b.share ?? 0) - (a.share ?? 0))[0];
+  const most = hunger.rows[0];
+  out.push({
+    tag: "Hunger",
+    title: `${share.country} has the highest share of undernourished people`,
+    figure: `${share.share?.toFixed(1)}%`,
+    body: `${fmt(share.value ?? 0, "compact")} people. ${most.country} has the most people affected (${fmt(most.value ?? 0, "compact")}) because its population is much larger.`,
+    tone: "bad",
+  });
+  if (w1.country === most.country)
     out.push({
-      tag: "Biggest mover",
-      title: k.label,
-      figure: signed(c),
-      body: `${k.label} moved from ${fmt(k.previous, k.format, k.decimals)} to ${fmt(k.value, k.format, k.decimals)} ${compareLabel}, the largest swing of any headline measure.`,
-      tone: good ? "good" : "bad",
-    });
-  }
-
-  const m0 = trend.metrics[0];
-  const key = m0.series[0].key;
-  const vals = trend.rows.map((r) => Number(r[key as keyof (typeof trend.rows)[number]]));
-  if (vals.length > 1) {
-    const g = pctChange(vals[vals.length - 1], vals[0]);
-    let best = 1;
-    for (let i = 2; i < vals.length; i++) if (vals[i] - vals[i - 1] > vals[best] - vals[best - 1]) best = i;
-    const idx = (i: number) => String(trend.rows[i][trend.index as keyof (typeof trend.rows)[number]]);
-    out.push({
-      tag: "Trend",
-      title: m0.label,
-      figure: signed(g, 0),
-      body: `From ${fmt(vals[0], m0.format)} in ${idx(0)} to ${fmt(vals[vals.length - 1], m0.format)} in ${idx(vals.length - 1)}. The biggest single jump came in ${idx(best)} (+${fmt(vals[best] - vals[best - 1], m0.format)}).`,
-      tone: g >= 0 ? "good" : "bad",
-    });
-  }
-
-  const segTotal = segments.items.reduce((a, b) => a + b.value, 0) || 1;
-  const top = [...segments.items].sort((a, b) => b.value - a.value)[0];
-  const fastest = [...segments.items].sort((a, b) => b.change - a.change)[0];
-  if (top)
-    out.push({
-      tag: "Leader",
-      title: top.name,
-      figure: `${((top.value / segTotal) * 100).toFixed(0)}%`,
-      body: `${top.name} carries the largest share of volume. ${fastest && fastest !== top ? `${fastest.name} is growing fastest at ${signed(fastest.change)}.` : "It is also the fastest grower."}`,
+      tag: "Overlap",
+      title: `${w1.country} tops both lists`,
+      figure: "1st · 1st",
+      body: `The most food wasted and the most people undernourished, which makes ${w1.country} the clearest case for redirecting surplus food to people who need it.`,
       tone: "neutral",
     });
-
-  const t = evaluateTargets();
-  const missed = t.filter((x) => !x.met);
+  const byRate = [...supplyChain.rows].sort((a, b) => b.waste - a.waste);
+  const byLoss = [...supplyChain.rows].sort((a, b) => b.lost - a.lost);
   out.push({
-    tag: "Targets",
-    title: missed.length ? `${missed.length} target${missed.length > 1 ? "s" : ""} still open` : "All targets met",
-    figure: `${t.length - missed.length}/${t.length}`,
-    body: missed.length
-      ? missed.map((x) => `${x.label}: ${x.gapText} to go`).join(" · ")
-      : "Every target set in the brief is met by the current numbers.",
-    tone: missed.length ? "bad" : "good",
+    tag: "Supply chain",
+    title: `${byRate[0].stage} are the leakiest stage`,
+    figure: `${byRate[0].waste}%`,
+    body: `${byLoss[0].lost} t lost at ${byLoss[0].short.toLowerCase()}, the most of any stage. ${byRate[1].stage} follow at ${byRate[1].waste}% (${byRate[1].lost} t).`,
+    tone: "bad",
   });
-
-  const falling = segments.items.filter((s) => s.change < 0);
-  if (falling.length)
-    out.push({
-      tag: "Watch",
-      title: falling.map((s) => s.name).join(", "),
-      figure: signed(Math.min(...falling.map((s) => s.change))),
-      body: `${falling.length === 1 ? "This is the only line" : "These are the only lines"} shrinking ${compareLabel}. Worth a closer look before scaling further.`,
-      tone: "bad",
-    });
-
+  const lost = supplyChain.rows.reduce((t, r) => t + r.lost, 0);
+  const start = supplyChain.rows[0].entering;
+  out.push({
+    tag: "Farm to fork",
+    title: "Almost half the food never makes it",
+    figure: `${Math.round((lost / start) * 100)}%`,
+    body: `${fmt(lost)} t of the ${fmt(start)} t that enters production is lost along the way, from harvest through to consumers.`,
+    tone: "bad",
+  });
   return out;
 }
 
@@ -675,6 +1054,22 @@ export function Insights() {
             </div>
             <h4 className="mt-3 text-[15px] font-semibold text-fg">{it.title}</h4>
             <p className="mt-1.5 text-[12.5px] leading-relaxed text-muted">{it.body}</p>
+          </article>
+        ))}
+      </div>
+      <h3 className="mt-3 text-[15px] font-semibold text-fg">How AI can cut the waste</h3>
+      <div className="grid gap-3 md:grid-cols-2">
+        {aiPlays.map((p, i) => (
+          <article
+            key={p.title}
+            className="animate-fade-up border border-line bg-card p-5 transition-colors duration-300 hover:border-line-2"
+            style={{ animationDelay: `${(items.length + i) * 60}ms` }}
+          >
+            <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-faint">
+              <span className="mr-2 text-clay">AI {String(i + 1).padStart(2, "0")}</span>
+            </span>
+            <h4 className="mt-2 text-[15px] font-semibold text-fg">{p.title}</h4>
+            <p className="mt-1.5 text-[12.5px] leading-relaxed text-muted">{p.body}</p>
           </article>
         ))}
       </div>

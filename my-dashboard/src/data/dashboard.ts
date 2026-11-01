@@ -7,7 +7,12 @@
  * ───────────────────────────────────────────────────────────────
  */
 
-export type Fmt = "number" | "compact" | "currency" | "percent";
+import waste1 from "@/assets/intro/waste-1.jpg";
+import waste2 from "@/assets/intro/waste-2.jpg";
+import waste3 from "@/assets/intro/waste-3.jpg";
+import waste4 from "@/assets/intro/waste-4.jpg";
+
+export type Fmt ="number" | "compact" | "currency" | "percent";
 export type IconName =
   | "users"
   | "zap"
@@ -25,22 +30,38 @@ export const meta = {
   product: "Nexus",
   currency: "INR",
   updated: "1 Nov 2026",
-  source: "Team dataset · Jan – Dec 2026",
+  source: "NEXUS Foods datasets · World Bank / FAO 2024",
 };
 
 export const hero = {
-  badge: "Live model · every figure traces back to the team dataset",
+  badge: "Every figure traces back to the NEXUS Foods datasets",
   badgeLink: "See the data",
   title: ["Every number that matters,", "in one clear view"],
   subtitle:
-    "One view of adoption, accuracy, cost and time saved across every team, with the targets we were set and the insights that follow from them.",
+    "Food waste, hunger and supply chain losses across five countries, with the insights that follow from them.",
   cta: "Explore the dashboard",
 };
 
-/** The scroll intro: kicker line plus the three headline KPIs (first three below). */
+/** The scroll intro: four images shown 2 × 2 once the wordmark zooms away. */
 export const intro = {
-  kicker: "12 months · 6 teams · 1 question",
-  note: "Are we on track to hit every target?",
+  images: [
+    {
+      src: waste1,
+      alt: "Quote by Pope Francis over a photo of vegetables: “Throwing away food is like stealing from the table of those who are poor and hungry.”",
+    },
+    {
+      src: waste2,
+      alt: "Two-part image: salad scraped into a bin, captioned “the food you waste”, above a hand holding out an empty bowl, captioned “can be someone’s meal”.",
+    },
+    {
+      src: waste3,
+      alt: "“Food is the largest single contributor to landfills” — 24% of landfill is food waste, shown as one clear bag of food scraps among black rubbish bags.",
+    },
+    {
+      src: waste4,
+      alt: "Illustration titled “Don’t waste food”: a well-fed man says “I can’t eat everything…” while a thin boy beside the same bin says “I can eat anything!”",
+    },
+  ],
 };
 
 export interface Kpi {
@@ -164,31 +185,136 @@ export const targets = [
   { label: "Hours saved / month", value: 4310, target: 4000, rule: "atLeast" as const, format: "number" as Fmt },
 ];
 
-/** Full data table (Data view). Columns are sortable. */
-export const table = {
-  title: "Team by team",
-  note: "December 2026 · click a column to sort",
-  columns: [
-    { key: "team", label: "Team" },
-    { key: "users", label: "Users", format: "number" as Fmt },
-    { key: "tasks", label: "Tasks", format: "number" as Fmt },
-    { key: "accuracy", label: "Accuracy", format: "percent" as Fmt },
-    { key: "hours", label: "Hours saved", format: "number" as Fmt },
-    { key: "cost", label: "Cost / task", format: "currency" as Fmt, decimals: 2 },
-    { key: "change", label: "MoM", format: "percent" as Fmt, signed: true },
-  ],
+export type Flag = "IN" | "BR" | "KE" | "CA" | "GB";
+
+/** One column of the Data view: a ranked box of countries, with a column chart beneath it. */
+export interface Ranking {
+  heading: string;
+  unit: string;
+  chartTitle: string;
+  format: Fmt;
+  /** Ordered most to least; `value: null` = no figure for that country. */
+  rows: { country: string; flag: Flag; value: number | null; share?: number }[];
+  /** Tooltip / box text for a row with no value. */
+  missing?: string;
+  conclusion: string;
+  footnote: string;
+}
+
+/** Data view, left: estimated food waste by country, most to least. */
+export const waste: Ranking = {
+  heading: "Waste",
+  unit: "tonnes",
+  chartTitle: "Estimated food waste per year",
+  format: "number",
   rows: [
-    { team: "Customer support", users: 4620, tasks: 36200, accuracy: 95.1, hours: 1820, cost: 3.9, change: 14.6 },
-    { team: "Sales ops", users: 2740, tasks: 19800, accuracy: 93.8, hours: 960, cost: 4.4, change: 26.5 },
-    { team: "Finance", users: 1560, tasks: 16400, accuracy: 96.3, hours: 840, cost: 4.1, change: 12.0 },
-    { team: "HR & internal", users: 3560, tasks: 13800, accuracy: 91.2, hours: 690, cost: 6.2, change: 0.7 },
+    { country: "India", flag: "IN", value: 18000 },
+    { country: "Brazil", flag: "BR", value: 8400 },
+    { country: "Kenya", flag: "KE", value: 4140 },
+    { country: "Canada", flag: "CA", value: 3800 },
+    { country: "UK", flag: "GB", value: 3000 },
   ],
+  conclusion: "India produces the highest amount of food waste among these five countries, followed by Brazil.",
+  footnote: "Calculation: annual food handled × food waste percentage.",
 };
 
-/** Optional hand-written findings shown first in the Insights view. */
+/** Data view, right: undernourished people by country, most to least. */
+export const hunger: Ranking = {
+  heading: "Hunger",
+  unit: "People affected",
+  chartTitle: "Undernourished people",
+  format: "compact",
+  rows: [
+    { country: "India", flag: "IN", value: 175.7e6, share: 12.0 },
+    { country: "Kenya", flag: "KE", value: 21.2e6, share: 36.8 },
+    { country: "Brazil", flag: "BR", value: 6.4e6, share: 3.0 },
+    { country: "Canada", flag: "CA", value: 1.2e6, share: 3.0 },
+    { country: "UK", flag: "GB", value: null },
+  ],
+  missing: "Not included",
+  conclusion:
+    "Kenya has the highest share of undernourished people (36.8%), while India has the most people affected because its population is much larger.",
+  footnote:
+    "World Bank / FAO undernourishment data (2024), approximate. Undernourishment means insufficient regular dietary energy intake; it is not the same as everyone experiencing food insecurity.",
+};
+
+/** Data view, full width: Dataset 2, supply chain performance (tonnes). */
+export type Heat = "red" | "orange" | "yellow";
+export const supplyChain = {
+  heading: "Supply chain",
+  unit: "tonnes",
+  chartTitle: "How food moves through the supply chain",
+  caption: "From producers to consumers, and where waste occurs at each stage.",
+  rows: [
+    { stage: "Production and harvesting", short: "Production", entering: 1000, lost: 80, waste: 8, mark: { entering: "red", lost: "yellow" } },
+    { stage: "Transportation", short: "Transport", entering: 920, lost: 40, waste: 4, mark: { entering: "orange" } },
+    { stage: "Warehousing", short: "Warehousing", entering: 880, lost: 60, waste: 7, mark: { entering: "yellow" } },
+    { stage: "Retail stores", short: "Retail", entering: 820, lost: 120, waste: 15, mark: { lost: "red", waste: "red" } },
+    { stage: "Food service", short: "Food service", entering: 700, lost: 70, waste: 10, mark: { waste: "orange" } },
+    { stage: "Consumers", short: "Consumers", entering: 630, lost: 90, waste: 14, mark: { lost: "orange", waste: "yellow" } },
+  ] as { stage: string; short: string; entering: number; lost: number; waste: number; mark: Partial<Record<"entering" | "lost" | "waste", Heat>> }[],
+};
+
+/** Insights view: where AI can cut raw food waste across the supply chain. */
+export const aiPlays = [
+  {
+    title: "Weather-aware demand forecasting",
+    body: "AI can analyze historical sales alongside live weather data (monsoon rains, summer heatwaves) to lift demand prediction accuracy from low baselines like 67% in India and 61% in Kenya toward high-performing benchmarks.",
+  },
+  {
+    title: "Real-time perishability tracking",
+    body: "AI can track temperature, humidity and inventory velocity to monitor the exact shelf life of raw food, especially high-waste items like fresh fruit (24% waste) and vegetables (19% waste).",
+  },
+  {
+    title: "Dynamic markdown and rescue routing",
+    body: "Before produce spoils in retail stores (where waste peaks at 15%), AI can trigger price adjustments or alert community partners to rescue surplus food while it is still usable.",
+  },
+  {
+    title: "Supply chain bottleneck optimization",
+    body: "AI can weigh shifting variables across production, transportation (4% waste), warehousing (7% waste) and retail at once, in a way static spreadsheets never could.",
+  },
+];
+
+/** Overview: the pitch. NEXUS Harvest Lifeline, one mission, three AI systems. */
+export const lifeline = {
+  name: "NEXUS Harvest Lifeline",
+  tagline: "One mission. Three AI systems. Less food wasted.",
+  quote: "The food isn't worthless. We're just running out of time to save it.",
+  pitch:
+    "An AI-powered system that predicts when raw food is at risk of being wasted and finds a better destination for it before it spoils.",
+  stats: [
+    { value: "18,000 t", label: "Estimated annual food waste in India", pct: 48, ring: "48% of the five-country total" },
+    { value: "26%", label: "Waste rate during monsoon season", pct: 26, ring: "of food handled" },
+    { value: "24%", label: "Fresh fruit waste rate", pct: 24, ring: "of fresh fruit" },
+  ],
+  capabilities: [
+    { title: "AI demand forecasting", body: "Buy what will sell, not what might." },
+    { title: "Freshness monitoring", body: "Know how long every batch has left." },
+    { title: "Smart redistribution", body: "Send food where it will be used before it spoils." },
+  ],
+  approach:
+    "Rather than an expensive overhaul or turning raw materials into processed products, it improves how NEXUS buys, stores, transports and redirects food.",
+  solutions: [
+    { name: "NEXUS DemandPulse", problem: "Inaccurate demand forecasts and excessive purchasing" },
+    { name: "NEXUS FreshClock", problem: "Spoilage of fruits, vegetables and other perishables" },
+    { name: "NEXUS StormSwitch", problem: "Monsoon disruption, delivery delays and transport losses" },
+    { name: "NEXUS RescueMesh", problem: "Unsold food at retail and limited access for communities" },
+    { name: "NEXUS FarmLink", problem: "Poor coordination between farmers, harvests and buyers" },
+  ],
+  investment: "$1M",
+  rollout: [
+    { step: "India", note: "Measurable pilot first", flag: "IN" as Flag },
+    { step: "Kenya", note: "Next market", flag: "KE" as Flag },
+    { step: "Brazil", note: "Then scale", flag: "BR" as Flag },
+  ],
+  angle:
+    "Prevent waste before it happens, not just discount or donate food afterwards. Actual challenge data is kept separate from projected pilot results.",
+};
+
+/** Hand-written finding shown first in the Overview and Insights views. */
 export const notes: { title: string; body: string }[] = [
   {
     title: "Recommendation",
-    body: "Scale reply drafting only after accuracy clears 95%. Every point below that adds review time, which is where most of the cost per task comes from.",
+    body: "Start at retail. It has the highest waste rate (15%) and the biggest loss (120 t) of any stage, and AI-led markdowns and rescue routing there would cut more waste than anywhere else in the chain.",
   },
 ];
