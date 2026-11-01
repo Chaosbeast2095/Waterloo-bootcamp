@@ -6,7 +6,6 @@ import { trend } from "@/data/dashboard";
 export default function App() {
   const [view, setView] = useState<View>("overview");
   const [metric, setMetric] = useState(trend.metrics[0].id);
-  const [query, setQuery] = useState("");
 
   const go = useCallback((v: View) => {
     setView(v);
@@ -16,7 +15,6 @@ export default function App() {
   const reset = useCallback(() => {
     setView("overview");
     setMetric(trend.metrics[0].id);
-    setQuery("");
   }, []);
 
   return (
@@ -31,8 +29,6 @@ export default function App() {
             setView={setView}
             metric={metric}
             setMetric={setMetric}
-            query={query}
-            setQuery={setQuery}
             reset={reset}
           />
         </Hero>

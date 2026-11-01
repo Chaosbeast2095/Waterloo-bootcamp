@@ -484,7 +484,6 @@ const FLAGS = { IN, KE, CA, GB };
 export const SERIES = { waste: PALETTE[0], hunger: "#2F7A4F" };
 const CHART_H = 180;
 
-const has = (q: string, ...s: string[]) => !q || s.some((x) => x.toLowerCase().includes(q));
 const ordinal = (n: number) => (n === 1 ? "st" : n === 2 ? "nd" : n === 3 ? "rd" : "th");
 
 function FlagIcon({ code, className }: { code: Flag; className?: string }) {
@@ -492,13 +491,10 @@ function FlagIcon({ code, className }: { code: Flag; className?: string }) {
   return <F aria-hidden className={cn("h-[14px] w-[21px] shrink-0 shadow-[0_0_0_1px_rgba(13,60,38,0.14)]", className)} />;
 }
 
-function RankBox({ data, color, query }: { data: Ranking; color: string; query: string }) {
+function RankBox({ data, color }: { data: Ranking; color: string }) {
   const reduce = useReducedMotion();
-  const q = query.trim().toLowerCase();
   const max = Math.max(...data.rows.map((r) => r.value ?? 0));
-  const rows = data.rows
-    .map((r, i) => ({ ...r, rank: r.value === null ? null : i + 1 }))
-    .filter((r) => has(q, r.country));
+  const rows = data.rows.map((r, i) => ({ ...r, rank: r.value === null ? null : i + 1 }));
   return (
     <section className="flex min-w-0 flex-col rounded-2xl! border border-line bg-card p-5 sm:p-6">
       {/* Rows spread to fill the box so both boxes line up. */}
@@ -550,7 +546,6 @@ function RankBox({ data, color, query }: { data: Ranking; color: string; query: 
           </li>
         ))}
       </ol>
-      {!rows.length && <p className="py-8 text-center text-[12.5px] text-muted">Nothing matches “{query}”.</p>}
       <div className="mt-6 border-l-2 pl-3" style={{ borderColor: color }}>
         <p className="text-[13px] font-medium leading-snug text-fg text-pretty">{data.conclusion}</p>
         <p className="mt-1 text-[11.5px] leading-relaxed text-faint text-pretty">{data.footnote}</p>
@@ -631,7 +626,7 @@ export function ColumnChart({ data, color }: { data: Ranking; color: string }) {
   );
 }
 
-export function DataView({ query }: { query: string }) {
+export function DataView() {
   const cols = [
     { data: waste, color: SERIES.waste },
     { data: hunger, color: SERIES.hunger },
@@ -646,7 +641,7 @@ export function DataView({ query }: { query: string }) {
             {data.heading}
             <span className="font-normal text-muted">({data.unit})</span>
           </h3>
-          <RankBox data={data} color={color} query={query} />
+          <RankBox data={data} color={color} />
           <ColumnChart data={data} color={color} />
         </div>
       ))}

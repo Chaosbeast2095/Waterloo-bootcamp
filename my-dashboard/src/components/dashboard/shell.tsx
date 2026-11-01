@@ -3,7 +3,7 @@ import { ArrowRight, Thermometer, TrendingUp, Truck } from "lucide-react";
 import { useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { Logo } from "./logo";
-import { aiDeclaration, hero, intro, meta, mission } from "@/data/dashboard";
+import { aiDeclaration, hero, intro, lifeline, meta, mission } from "@/data/dashboard";
 import { buildFacts } from "./widgets";
 
 export type View = "overview" | "data" | "insights" | "risk";
@@ -216,11 +216,12 @@ export function Hero({ go, children }: { go: (v: View) => void; children: ReactN
           {hero.badgeLink} <ArrowRight size={12} />
         </a>
       </aside>
-      <h2 className="text-grad mb-6 max-w-3xl text-center text-[clamp(2.25rem,5.4vw,3.75rem)] font-medium leading-[1.12] tracking-[-0.05em] text-balance">
-        {hero.title[0]}
-        <br />
-        {hero.title[1]}
+      <h2 className="text-grad mb-3 max-w-4xl text-center text-[clamp(2.5rem,6.4vw,4.5rem)] font-semibold leading-[1.05] tracking-[-0.05em] text-balance">
+        {lifeline.name}
       </h2>
+      <p className="mb-6 max-w-3xl text-center text-[clamp(1.25rem,2.8vw,1.9rem)] font-medium leading-snug tracking-[-0.03em] text-fg/70 text-balance">
+        {hero.title[0]} {hero.title[1]}
+      </p>
       <p className="mb-10 max-w-2xl text-center text-[15px] text-muted text-pretty">{hero.subtitle}</p>
       <a
         href="#app"

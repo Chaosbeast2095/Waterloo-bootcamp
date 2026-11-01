@@ -1,6 +1,5 @@
-import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Bell, LayoutDashboard, RotateCcw, Search, ShieldCheck, Sparkles, Table2 } from "lucide-react";
+import { LayoutDashboard, RotateCcw, ShieldCheck, Sparkles, Table2 } from "lucide-react";
 import { Mark } from "./logo";
 import { cn } from "@/lib/utils";
 import { meta, notes } from "@/data/dashboard";
@@ -24,16 +23,12 @@ const HEAD: Record<View, [string, string]> = {
 export function AppFrame({
   view,
   setView,
-  query,
-  setQuery,
   reset,
 }: {
   view: View;
   setView: (v: View) => void;
   metric: string;
   setMetric: (m: string) => void;
-  query: string;
-  setQuery: (q: string) => void;
   reset: () => void;
 }) {
   return (
@@ -84,27 +79,9 @@ export function AppFrame({
 
       {/* Main */}
       <div className="min-w-0 p-4 sm:p-6">
-        <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-semibold tracking-tight">{HEAD[view][0]}</h2>
-            <p className="mt-0.5 text-[12.5px] text-muted">{HEAD[view][1]}</p>
-          </div>
-          <div className="flex w-full items-center gap-2 sm:w-auto">
-            <label className="flex h-9 min-w-0 flex-1 items-center gap-2 border border-line-2 bg-card px-3 text-muted transition-colors focus-within:border-clay/60 sm:w-60 sm:flex-none">
-              <Search className="size-3.5 shrink-0" />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={view === "data" ? "Search countries…" : "Search use cases, teams…"}
-                aria-label="Search"
-                className="w-full min-w-0 bg-transparent text-[12.5px] text-fg outline-none placeholder:text-faint"
-              />
-            </label>
-            <button type="button" aria-label="Notifications" className="relative grid size-9 shrink-0 cursor-pointer place-items-center border border-line-2 bg-card text-fg/80 transition-colors hover:text-fg">
-              <Bell className="size-4" />
-              <i className="absolute right-1.5 top-1.5 size-1.5 bg-clay" />
-            </button>
-          </div>
+        <div className="mb-5">
+          <h2 className="text-xl font-semibold tracking-tight">{HEAD[view][0]}</h2>
+          <p className="mt-0.5 text-[12.5px] text-muted">{HEAD[view][1]}</p>
         </div>
 
         {view !== "data" && <FactRow />}
@@ -125,7 +102,7 @@ export function AppFrame({
                 {notes[0] && <NoteCard note={notes[0]} compact />}
               </div>
             )}
-            {view === "data" && <DataView query={query} />}
+            {view === "data" && <DataView />}
             {view === "insights" && <Insights />}
             {view === "risk" && <RiskView />}
           </motion.div>
