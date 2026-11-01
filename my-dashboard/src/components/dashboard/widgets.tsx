@@ -26,14 +26,20 @@ import {
   calendar,
   categories,
   countries,
+  humanRole,
   hunger,
+  investmentDecision,
   lifeline,
   kpis,
   notes,
   partners,
+  phases,
+  problem,
+  risks,
   pilotGoal,
   seasons,
   segments,
+  stakeholders,
   supplyChain,
   targets,
   waste,
@@ -871,9 +877,9 @@ export function PilotPlan() {
 
 /** Cell highlights exactly as marked on the dataset; no other cell is coloured. */
 const HEAT: Record<Heat, string> = {
-  red: "bg-[#f7d4cc] text-[#8f2a16]",
-  orange: "bg-[#fbe1c6] text-[#87470c]",
-  yellow: "bg-[#f8eeb4] text-[#625307]",
+  red: "bg-[#d9432b] text-white",
+  orange: "bg-[#f39a2e] text-[#2e1500]",
+  yellow: "bg-[#f7d635] text-[#2b2400]",
 };
 const SUPPLY = { kept: "#B9CBBE", lost: PALETTE[0] };
 const STAGE_COLS = [
@@ -886,12 +892,13 @@ export function SupplyTable() {
   return (
     <section className="min-w-0 overflow-hidden rounded-2xl! border border-line bg-card">
       <div className="scroll-thin overflow-x-auto">
-        <table className="w-full min-w-[560px] border-collapse text-[13px]">
+        {/* Spreadsheet grid: every cell ruled; marked cells filled edge to edge. */}
+        <table className="w-full min-w-[560px] border-collapse border-hidden text-[13px]">
           <thead>
             <tr className="bg-fg text-card">
-              <th className="px-5 py-3.5 text-left text-[12px] font-semibold">Supply chain stage</th>
+              <th className="border border-card/20 px-5 py-4 text-left text-[13.5px] font-semibold">Supply chain stage</th>
               {STAGE_COLS.map((c) => (
-                <th key={c.key} className="px-5 py-3.5 text-right text-[12px] font-semibold">
+                <th key={c.key} className="border border-card/20 px-5 py-4 text-right text-[13.5px] font-semibold">
                   {c.label}
                 </th>
               ))}
@@ -899,15 +906,16 @@ export function SupplyTable() {
           </thead>
           <tbody>
             {supplyChain.rows.map((r) => (
-              <tr key={r.stage} className="border-b border-line transition-colors last:border-b-0 hover:bg-fg/[0.03]">
-                <td className="px-5 py-3 font-medium text-fg">{r.stage}</td>
+              <tr key={r.stage} className="transition-colors hover:bg-fg/[0.03]">
+                <td className="border border-fg/15 px-5 py-4 text-[15px] font-medium text-fg">{r.stage}</td>
                 {STAGE_COLS.map((c) => {
                   const heat = r.mark[c.key];
                   return (
-                    <td key={c.key} className="px-5 py-2 text-right">
-                      <span className={cn("num inline-block rounded-md! px-2.5 py-1", heat ? `${HEAT[heat]} font-semibold` : "text-fg/80")}>
-                        {c.key === "waste" ? `${r.waste}%` : fmt(r[c.key])}
-                      </span>
+                    <td
+                      key={c.key}
+                      className={cn("num border border-fg/15 px-5 py-4 text-right text-[19px]", heat ? `${HEAT[heat]} font-bold` : "font-medium text-fg/80")}
+                    >
+                      {c.key === "waste" ? `${r.waste}%` : fmt(r[c.key])}
                     </td>
                   );
                 })}
@@ -1055,6 +1063,8 @@ export function Lifeline() {
         </div>
       </section>
 
+      <ProblemStatement />
+
       {/* The case, in three rings */}
       <div className="grid gap-4 md:grid-cols-3">
         {L.stats.map((st, i) => (
@@ -1069,6 +1079,8 @@ export function Lifeline() {
           </div>
         ))}
       </div>
+
+      <WhoWeProtect />
 
       {/* Three capabilities */}
       <section className="rounded-2xl! border border-line bg-card p-5 sm:p-6">
@@ -1130,6 +1142,189 @@ export function Lifeline() {
         </section>
       </div>
     </div>
+  );
+}
+
+/* ---------- Pitch requirements: problem, stakeholders, human role, risk, phases ---------- */
+
+/** Ruled, spreadsheet-style table used for the human-role and risk tables. */
+function SheetTable({ head, rows, first }: { head: string[]; rows: string[][]; first?: "strong" }) {
+  return (
+    <div className="min-w-0 overflow-hidden rounded-2xl! border border-line bg-card">
+      <div className="scroll-thin overflow-x-auto">
+        <table className="w-full min-w-[640px] border-collapse border-hidden text-[13.5px]">
+          <thead>
+            <tr className="bg-fg text-card">
+              {head.map((h) => (
+                <th key={h} className="border border-card/20 px-5 py-4 text-left text-[13.5px] font-semibold">
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r[0]} className="transition-colors hover:bg-fg/[0.03]">
+                {r.map((cell, i) => (
+                  <td
+                    key={i}
+                    className={cn(
+                      "border border-fg/15 px-5 py-4 align-top leading-snug",
+                      i === 0 ? (first === "strong" ? "text-[15px] font-bold text-fg" : "font-semibold text-fg") : "text-fg/80",
+                    )}
+                  >
+                    {cell}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+export function ProblemStatement() {
+  const handled = countries.reduce((t, c) => t + c.handled, 0);
+  const lost = countries.reduce((t, c) => t + c.waste, 0);
+  const india = countries.find((c) => c.country === "India");
+  const kenya = countries.find((c) => c.country === "Kenya");
+  const tonnes = (v: number) => new Intl.NumberFormat("en-US").format(v);
+  return (
+    <section className="rounded-2xl! border border-line bg-card p-6 sm:p-8">
+      <div className="text-[12px] font-bold uppercase tracking-[0.16em] text-clay">The problem</div>
+      <h3 className="mt-2 text-[clamp(1.4rem,2.6vw,1.9rem)] font-semibold leading-tight tracking-tight text-fg">{problem.title}</h3>
+      <div className="mt-5 grid gap-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+        <div className="grid gap-3 text-[14px] leading-relaxed text-fg/85">
+          <p className="m-0">
+            Every year, NEXUS Foods handles <b className="num text-fg">{tonnes(handled)} tonnes</b> of food across {["one", "two", "three", "four", "five"][countries.length - 1] ?? countries.length} countries, yet{" "}
+            <b className="num text-clay-deep">{tonnes(lost)} tonnes</b> are lost or wasted.
+          </p>
+          <p className="m-0">
+            That is a <b className="num text-fg">{((lost / handled) * 100).toFixed(1)}%</b> overall waste rate, {problem.impact}
+          </p>
+          {india && kenya && (
+            <p className="m-0">
+              The problem is most severe in India, where <b className="num text-fg">{tonnes(india.waste)} tonnes</b> are wasted each year, and Kenya, where{" "}
+              <b className="num text-fg">{kenya.rate}%</b> of food is lost or wasted.
+            </p>
+          )}
+          <p className="m-0 text-muted">{problem.cause}</p>
+        </div>
+        <div className="flex flex-col justify-center rounded-2xl! bg-fg p-6 text-card">
+          <div className="text-[12px] font-bold uppercase tracking-[0.16em] text-clay">Our mission</div>
+          <p className="mt-2 text-[16px] font-medium leading-snug">{problem.mission}</p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function WhoWeProtect() {
+  return (
+    <section className="rounded-2xl! border border-line bg-card p-6 sm:p-8">
+      <h3 className="text-[22px] font-semibold tracking-tight text-fg">{stakeholders.title}</h3>
+      <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {stakeholders.cards.map((c) => (
+          <article key={c.name} className="flex flex-col items-start rounded-xl! border border-line bg-frame/40 p-5">
+            <span aria-hidden className="grid size-16 place-items-center rounded-full! bg-card text-[34px] leading-none shadow-[inset_0_0_0_1px_rgba(13,60,38,0.08)]">
+              {c.icon}
+            </span>
+            <h4 className="mt-4 text-[17px] font-semibold text-fg">{c.name}</h4>
+            <p className="mt-1.5 text-[13px] leading-relaxed text-muted">{c.body}</p>
+          </article>
+        ))}
+      </div>
+      <blockquote className="m-0 mt-6 border-l-2 border-clay pl-4 text-[16px] font-medium italic leading-snug text-fg">“{stakeholders.quote}”</blockquote>
+    </section>
+  );
+}
+
+export function HumanRole() {
+  return (
+    <section className="mt-4 grid gap-4">
+      <h3 className="text-[22px] font-semibold tracking-tight text-fg">{humanRole.title}</h3>
+      <SheetTable head={["AI system", "What AI recommends", "What humans decide"]} rows={humanRole.rows} first="strong" />
+      <div className="rounded-2xl! bg-fg p-6 text-card sm:p-8">
+        <div className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.16em] text-clay">
+          <Users className="size-4" /> Human in the loop
+        </div>
+        <div className="mt-3 grid max-w-3xl gap-2 text-[14.5px] leading-relaxed text-card/85">
+          {humanRole.body.map((b, i) => (
+            <p key={i} className={cn("m-0", i === 0 && "text-[17px] font-semibold text-card")}>
+              {b}
+            </p>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function RiskView() {
+  const D = investmentDecision;
+  return (
+    <div className="grid gap-4">
+      <SheetTable head={["Risk", "Potential consequence", "Our safeguard"]} rows={risks.rows} first="strong" />
+      <blockquote className="m-0 rounded-2xl! border border-line bg-card p-6 text-[17px] font-medium italic leading-snug text-fg sm:p-8">
+        <span className="mr-1 text-clay">“</span>
+        {risks.quote}
+        <span className="ml-1 text-clay">”</span>
+      </blockquote>
+      <section className="rounded-2xl! bg-fg p-6 text-card sm:p-8">
+        <div className="text-[12px] font-bold uppercase tracking-[0.16em] text-clay">Investment decision</div>
+        <div className="mt-4 grid items-center gap-6 md:grid-cols-[auto_minmax(0,1fr)]">
+          <span className="grid size-32 place-items-center rounded-full! border-[10px] border-clay/80">
+            <span className="num text-[30px] font-semibold">{D.amount}</span>
+          </span>
+          <div>
+            <h3 className="text-[20px] font-semibold">{D.title}</h3>
+            <ul className="m-0 mt-3 grid list-none gap-2 p-0 text-[14px] text-card/85 sm:grid-cols-2">
+              {D.gates.map((g) => (
+                <li key={g} className="flex items-start gap-2">
+                  <span className="mt-1.5 size-2 shrink-0 rounded-full! bg-clay" />
+                  {g}
+                </li>
+              ))}
+            </ul>
+            <p className="mt-3 text-[12.5px] text-card/60">Success gate for the India pilot. Scale only if it is met.</p>
+          </div>
+        </div>
+        <blockquote className="m-0 mt-6 border-t border-card/15 pt-5 text-[17px] font-medium leading-snug text-card">“{D.quote}”</blockquote>
+      </section>
+    </div>
+  );
+}
+
+export function Phases() {
+  return (
+    <section className="rounded-2xl! border border-line bg-card p-6 sm:p-8">
+      <h3 className="text-[22px] font-semibold tracking-tight text-fg">Global adaptation: three phases</h3>
+      <ol className="m-0 mt-5 grid list-none gap-4 p-0 lg:grid-cols-3">
+        {phases.rows.map((ph, i) => (
+          <li key={ph.phase} className="flex flex-col rounded-xl! border border-line bg-frame/40 p-5">
+            <div className="flex items-center gap-3">
+              <span className={cn("num grid size-11 shrink-0 place-items-center rounded-full! text-[15px] font-semibold", i === 0 ? "bg-clay text-card" : "border border-line-2 bg-card text-fg")}>
+                {i + 1}
+              </span>
+              <div>
+                <div className="text-[12px] font-bold uppercase tracking-[0.14em] text-clay">{ph.phase}</div>
+                <div className="flex items-center gap-2 text-[16px] font-semibold text-fg">
+                  {ph.where}
+                  {ph.flags.map((f) => (
+                    <FlagIcon key={f} code={f} />
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="mt-3 text-[14px] font-semibold text-fg">{ph.title}</div>
+            <p className="mt-1 text-[13px] leading-relaxed text-muted">{ph.body}</p>
+          </li>
+        ))}
+      </ol>
+      <p className="mt-4 text-[12.5px] text-faint">{phases.note}</p>
+    </section>
   );
 }
 
@@ -1305,6 +1500,7 @@ export function Insights() {
           </article>
         ))}
       </div>
+      <HumanRole />
       <section className="mt-4 rounded-2xl! border border-line bg-card p-6 sm:p-8">
         <h3 className="text-[22px] font-semibold tracking-tight text-fg">Strategic partnership</h3>
         <ul className="m-0 mt-5 grid list-none gap-4 p-0 md:grid-cols-3">

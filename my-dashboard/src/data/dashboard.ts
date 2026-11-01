@@ -398,6 +398,112 @@ export const lifeline = {
     "Prevent waste before it happens, not just discount or donate food afterwards. Actual challenge data is kept separate from projected pilot results.",
 };
 
+/* ---------- Pitch requirements: problem, stakeholders, human role, risk, adaptation, AI use ---------- */
+
+/** Overview: the problem. Tonnage figures are computed from `countries` so they always match the data. */
+export const problem = {
+  title: "Food is being lost before it can feed people",
+  impact: "affecting farmer livelihoods, business profitability, consumer affordability and environmental sustainability.",
+  cause:
+    "Traditional supply-chain decisions struggle to respond quickly to unpredictable demand, seasonal weather disruptions and the limited shelf life of raw food materials.",
+  mission:
+    "Use AI to predict food waste before it happens, protect the value of every harvest and ensure more food reaches people instead of being discarded.",
+};
+
+/** Overview: who we protect. */
+export const stakeholders = {
+  title: "Who we protect",
+  cards: [
+    { icon: "🧑‍🌾", name: "Farmers", body: "More predictable demand, improved harvest planning and fewer rejected or unsold crops." },
+    { icon: "🏪", name: "Businesses", body: "Reduced inventory losses, improved purchasing decisions and lower waste-related costs." },
+    { icon: "🛒", name: "Consumers", body: "More consistent access to fresh food, improved availability and opportunities for affordable purchasing." },
+    { icon: "🤝", name: "Communities", body: "Greater access to safe surplus food through redistribution partnerships and reduced environmental waste." },
+  ],
+  quote:
+    "Our solution does not simply protect food. It protects the farmers who grow it, the businesses that transport it, and the people who depend on it.",
+};
+
+/** Insights: what AI recommends versus what people decide. */
+export const humanRole = {
+  title: "AI recommends. Humans decide.",
+  rows: [
+    ["DemandPulse", "Purchase quantities based on predicted demand", "Procurement managers approve orders"],
+    ["FreshClock", "Which food batches need immediate attention", "Quality teams inspect food and approve release"],
+    ["StormSwitch", "Alternative routes before weather disruptions", "Logistics managers approve transportation changes"],
+    ["RescueMesh", "Where safe surplus food could be redistributed", "Store managers and partners approve transfers"],
+    ["FarmLink", "Harvest timing and buyer matching", "Farmers and buyers agree on supply decisions"],
+  ],
+  body: [
+    "NEXUS Harvest Lifeline is designed to support human expertise, not replace it.",
+    "AI analyzes complex information, detects risks and generates recommendations. However, trained employees, farmers and logistics managers retain authority over purchasing, harvesting, transportation, food-safety approvals and redistribution.",
+    "Every important action remains reviewable, explainable and accountable.",
+  ],
+};
+
+/** Risk & Responsibility tab. */
+export const risks = {
+  rows: [
+    ["Forecasting errors", "Stockouts or excess purchasing", "Human approval and comparison with existing forecasts"],
+    ["Faulty freshness predictions", "Unsafe or premature food redistribution", "Physical food-quality inspections and established safety procedures"],
+    ["Inaccurate weather data", "Poor routing decisions", "Multiple weather sources and manual override"],
+    ["Limited digital infrastructure", "Farmers cannot access recommendations", "Mobile-first tools and offline-capable workflows"],
+    ["Data privacy issues", "Exposure of business or farmer data", "Access controls, data minimization and secure storage"],
+    ["Implementation costs", "Investment fails to generate sufficient returns", "Phased deployment, milestones and stop/go reviews"],
+  ],
+  quote: "We measure success not only by how much food we save, but by how safely, fairly and responsibly we save it.",
+};
+
+/** Risk tab: the investment decision. Success gate from the research paper [TARGET]. */
+export const investmentDecision = {
+  amount: "$1M",
+  title: "A capped, measurable pilot",
+  gates: [
+    "≥10% relative reduction in measured pilot-site waste",
+    "No fall in store fill rate",
+    "≥95% of pilot lots traceable",
+    "Independent quality and safety review",
+  ],
+  quote:
+    "We are not asking NEXUS to gamble $1 million on artificial intelligence. We are asking NEXUS to invest in a measurable system that predicts waste, protects food, supports human decisions and proves its value before expanding around the world.",
+};
+
+/** Overview: global adaptation, three phases. */
+export const phases = {
+  rows: [
+    {
+      phase: "Phase 1",
+      where: "India",
+      flags: ["IN"] as Flag[],
+      title: "Launch and validate",
+      body: "Deploy DemandPulse and FreshClock, supported by StormSwitch, RescueMesh and FarmLink in selected supply-chain locations. Target inaccurate forecasting and losses involving perishable produce.",
+    },
+    {
+      phase: "Phase 2",
+      where: "Kenya",
+      flags: ["KE"] as Flag[],
+      title: "Adapt for infrastructure and transport",
+      body: "Prioritize farmer coordination and accessible, mobile-first tools that work offline.",
+    },
+    {
+      phase: "Phase 3",
+      where: "Canada and UK",
+      flags: ["CA", "GB"] as Flag[],
+      title: "Optimize and expand",
+      body: "In Canada, emphasize cold-chain monitoring and freshness management. In the UK, prioritize inventory efficiency and safe surplus redistribution.",
+    },
+  ],
+  note: "Phases 2 and 3 are conditional expansion, only after the Indian pilot meets its performance and safety targets.",
+};
+
+/** Footer: responsible AI declaration. */
+export const aiDeclaration = {
+  used: "Analyze the NEXUS Foods datasets, identify patterns in food waste, brainstorm possible interventions, develop country-specific AI strategies, structure our proposed investment plan and support the design of our dashboard.",
+  checked:
+    "The numerical evidence against the original challenge datasets, and the assumptions, proposed solutions, stakeholder impacts and potential risks.",
+  responsibility:
+    "AI was used as a research and decision-support tool. Our team remains responsible for the recommendations, interpretation of the evidence and final investment proposal.",
+};
+
 /** Hand-written finding shown first in the Overview and Insights views. */
 export const notes: { title: string; body: string }[] = [
   {

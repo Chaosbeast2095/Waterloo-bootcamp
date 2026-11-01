@@ -3,15 +3,16 @@ import { ArrowRight, Menu, Thermometer, TrendingUp, Truck, X } from "lucide-reac
 import { useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { Logo } from "./logo";
-import { hero, intro, meta, mission } from "@/data/dashboard";
+import { aiDeclaration, hero, intro, meta, mission } from "@/data/dashboard";
 import { buildFacts } from "./widgets";
 
-export type View = "overview" | "data" | "insights";
+export type View = "overview" | "data" | "insights" | "risk";
 
 export const VIEWS: { id: View; label: string }[] = [
   { id: "overview", label: "Overview" },
   { id: "data", label: "Data" },
   { id: "insights", label: "Insights" },
+  { id: "risk", label: "Risk" },
 ];
 
 const clamp = (v: number, lo = 0, hi = 1) => Math.min(hi, Math.max(lo, v));
@@ -391,6 +392,25 @@ export function Footer() {
           <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-card/50">Updated</div>
           <p className="text-card/80">{meta.updated}</p>
         </div>
+      </div>
+      <div className="mx-auto max-w-7xl px-6 pb-14">
+        <section aria-labelledby="ai-declaration" className="rounded-2xl! border border-card/15 bg-card/[0.04] p-6 sm:p-8">
+          <h2 id="ai-declaration" className="text-[20px] font-semibold tracking-tight text-card">Responsible AI declaration</h2>
+          <div className="mt-4 grid gap-6 text-[13.5px] leading-relaxed text-card/80 md:grid-cols-3">
+            <div>
+              <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-clay">We used AI to</div>
+              <p className="m-0">{aiDeclaration.used}</p>
+            </div>
+            <div>
+              <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-clay">We checked</div>
+              <p className="m-0">{aiDeclaration.checked}</p>
+            </div>
+            <div>
+              <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-clay">Responsibility</div>
+              <p className="m-0">{aiDeclaration.responsibility}</p>
+            </div>
+          </div>
+        </section>
       </div>
       <div className="h-2 bg-clay" />
     </footer>

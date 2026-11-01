@@ -1,22 +1,24 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Bell, LayoutDashboard, RotateCcw, Search, Sparkles, Table2 } from "lucide-react";
+import { Bell, LayoutDashboard, RotateCcw, Search, ShieldCheck, Sparkles, Table2 } from "lucide-react";
 import { Mark } from "./logo";
 import { cn } from "@/lib/utils";
 import { meta, notes } from "@/data/dashboard";
-import { DataView, FactRow, Insights, Lifeline, NoteCard, PilotPlan, buildInsights } from "./widgets";
+import { DataView, FactRow, Insights, Lifeline, NoteCard, Phases, PilotPlan, RiskView, buildInsights } from "./widgets";
 import type { View } from "./shell";
 
 const NAV: { id: View; label: string; icon: typeof LayoutDashboard; count?: number }[] = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "data", label: "Data", icon: Table2 },
   { id: "insights", label: "Insights", icon: Sparkles, count: buildInsights().length },
+  { id: "risk", label: "Risk & Responsibility", icon: ShieldCheck },
 ];
 
 const HEAD: Record<View, [string, string]> = {
   overview: ["Overview", "Food waste, hunger and supply chain losses at a glance."],
   data: ["Data", "Food waste and hunger across four countries, side by side."],
   insights: ["Insights", "What the data says, and where AI can cut the waste."],
+  risk: ["Risk & Responsibility", "What could go wrong, how we guard against it, and why NEXUS should invest."],
 };
 
 export function AppFrame({
@@ -119,11 +121,13 @@ export function AppFrame({
               <div className="grid gap-4">
                 <Lifeline />
                 <PilotPlan />
+                <Phases />
                 {notes[0] && <NoteCard note={notes[0]} compact />}
               </div>
             )}
             {view === "data" && <DataView query={query} />}
             {view === "insights" && <Insights />}
+            {view === "risk" && <RiskView />}
           </motion.div>
         </AnimatePresence>
       </div>
