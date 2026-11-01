@@ -1,0 +1,369 @@
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { ArrowRight, Menu, X } from "lucide-react";
+import { useReducedMotion } from "motion/react";
+import { cn } from "@/lib/utils";
+import { fmt, pctChange, signed } from "@/lib/format";
+import { compareLabel, hero, intro, kpis, meta } from "@/data/dashboard";
+
+export type View = "overview" | "data" | "insights";
+
+export const VIEWS: { id: View; label: string }[] = [
+  { id: "overview", label: "Overview" },
+  { id: "data", label: "Data" },
+  { id: "insights", label: "Insights" },
+];
+
+const clamp = (v: number, lo = 0, hi = 1) => Math.min(hi, Math.max(lo, v));
+
+export function Wordmark({ className }: { className?: string }) {
+  return (
+    <span className={cn("wordmark", className)}>
+      {meta.wordmark}
+    </span>
+  );
+}
+
+/* ---------- Navigation (from the SaaS template) ---------- */
+
+export function Navigation({
+  view,
+  go,
+  reset,
+}: {
+  view: View;
+  go: (v: View) => void;
+  reset: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const link = (v: (typeof VIEWS)[number], mobile = false) => (
+    <a
+      key={v.id}
+      href="#app"
+      onClick={(e) => {
+        e.preventDefault();
+        go(v.id);
+        setOpen(false);
+      }}
+      className={cn(
+        "text-[13.5px] transition-colors duration-300",
+        mobile && "py-2",
+        view === v.id ? "text-fg" : "text-fg/55 hover:text-fg",
+      )}
+    >
+      {v.label}
+    </a>
+  );
+  return (
+    <header className="fixed inset-x-0 top-0 z-50 border-b border-line bg-page/80 backdrop-blur-md">
+      <nav className="relative mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
+        <a href="#top" className="text-[15px] tracking-[0.26em] text-fg">
+          <Wordmark />
+        </a>
+        <div className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-8 md:flex">
+          {VIEWS.map((v) => link(v))}
+        </div>
+        <div className="hidden items-center gap-3 md:flex">
+          <button
+            type="button"
+            onClick={reset}
+            className="h-10 cursor-pointer px-4 text-[13.5px] font-medium text-fg transition-colors hover:bg-fg/[0.07]"
+          >
+            Reset view
+          </button>
+          <a
+            href="#app"
+            onClick={(e) => {
+              e.preventDefault();
+              go("overview");
+            }}
+            className="inline-flex h-10 items-center bg-fg px-5 text-[13.5px] font-medium text-card transition-colors hover:bg-fg-2"
+          >
+            Open dashboard
+          </a>
+        </div>
+        <button
+          type="button"
+          className="cursor-pointer p-1.5 text-fg md:hidden"
+          onClick={() => setOpen(!open)}
+          aria-label="Toggle menu"
+          aria-expanded={open}
+        >
+          {open ? <X size={24} /> : <Menu size={24} />}
+        </button>
+      </nav>
+      {open && (
+        <div className="animate-slide-down border-t border-line bg-page/95 backdrop-blur-md md:hidden">
+          <div className="flex flex-col gap-2 px-6 py-4">
+            {VIEWS.map((v) => link(v, true))}
+            <div className="mt-2 flex gap-2 border-t border-line pt-4">
+              <button type="button" onClick={reset} className="h-10 flex-1 border border-line-2 text-[13.5px]">
+                Reset view
+              </button>
+              <a
+                href="#app"
+                onClick={(e) => {
+                  e.preventDefault();
+                  go("overview");
+                  setOpen(false);
+                }}
+                className="inline-flex h-10 flex-1 items-center justify-center bg-fg text-[13.5px] font-medium text-card"
+              >
+                Open dashboard
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+    </header>
+  );
+}
+
+/* ---------- Scroll-zoom intro: the wordmark, then the headline numbers ---------- */
+
+export function ScrollIntro() {
+  const reduce = useReducedMotion();
+  const sec = useRef<HTMLElement>(null);
+  const title = useRef<HTMLHeadingElement>(null);
+  const stats = useRef<HTMLDivElement>(null);
+  const hint = useRef<HTMLDivElement>(null);
+  const grid = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (reduce) return;
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const s = sec.current;
+      if (!s || !title.current || !stats.current || !hint.current || !grid.current) return;
+      const span = Math.max(s.offsetHeight - window.innerHeight, 1);
+      const p = clamp(-s.getBoundingClientRect().top / span);
+      const a = clamp(p / 0.55);
+      title.current.style.transform = `scale(${1 + a * a * 4.2})`;
+      title.current.style.opacity = String(1 - clamp((p - 0.2) / 0.28));
+      const b = clamp((p - 0.4) / 0.3);
+      stats.current.style.opacity = String(b);
+      stats.current.style.transform = `translateY(${(1 - b) * 36}px)`;
+      stats.current.style.visibility = b > 0 ? "visible" : "hidden";
+      hint.current.style.opacity = String(1 - clamp(p / 0.08));
+      grid.current.style.transform = `scale(${1 + p * 0.25})`;
+    };
+    const on = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", on, { passive: true });
+    window.addEventListener("resize", on);
+    return () => {
+      window.removeEventListener("scroll", on);
+      window.removeEventListener("resize", on);
+      cancelAnimationFrame(raf);
+    };
+  }, [reduce]);
+
+  const head = kpis.slice(0, 3);
+
+  return (
+    <section ref={sec} id="top" aria-label="Headline" className={cn("relative", reduce ? "" : "h-[260vh]")}>
+      <div
+        className={cn(
+          "isolate grid place-items-center overflow-hidden",
+          reduce ? "gap-16 px-4 pb-16 pt-36" : "sticky top-0 h-svh",
+        )}
+      >
+        <div ref={grid} aria-hidden className="grid-bg pointer-events-none absolute -inset-10 -z-10 will-change-transform" />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute left-1/2 top-1/2 -z-10 size-[70vmin] -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(closest-side,rgba(226,114,91,0.14),transparent)]"
+        />
+        <h1
+          ref={title}
+          className="wordmark m-0 origin-[50%_52%] whitespace-nowrap text-[clamp(4rem,19vw,17rem)] leading-none tracking-[0.06em] text-fg will-change-[transform,opacity]"
+          style={{ marginRight: "-0.06em" }}
+        >
+          {meta.wordmark}<span aria-hidden className="ml-[0.05em] inline-block size-[0.17em] bg-clay" />
+        </h1>
+
+        <div
+          ref={stats}
+          className={cn(
+            "grid place-content-center justify-items-center px-4 text-center",
+            reduce ? "relative" : "invisible absolute inset-0 opacity-0 will-change-[transform,opacity]",
+          )}
+        >
+          <p className="m-0 font-display text-[11px] font-bold uppercase tracking-[0.42em] text-fg/80">
+            {intro.kicker}
+          </p>
+          <div className="mt-11 grid max-w-[940px] grid-cols-1 gap-5 text-left sm:grid-cols-3 sm:gap-[clamp(20px,4vw,56px)]">
+            {head.map((k) => {
+              const c = pctChange(k.value, k.previous);
+              const good = k.goodWhen === "down" ? c < 0 : c > 0;
+              return (
+                <div key={k.label} className="border-t border-fg/15 pt-4">
+                  <div className="num font-display text-[clamp(2rem,5vw,3.6rem)] font-semibold leading-none">
+                    {fmt(k.value, k.format, k.decimals)}
+                  </div>
+                  <div className="mt-3 flex items-center gap-2 text-[12.5px] text-fg/60">
+                    <i className={cn("size-1.5 shrink-0", good ? "bg-sage" : "bg-clay")} />
+                    {k.label} · <span className={good ? "text-sage" : "text-clay"}>{signed(c)}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <p className="mt-11 font-display text-[clamp(1.1rem,2.2vw,1.6rem)] font-medium text-fg">
+            {intro.note}
+          </p>
+          <p className="mt-2 text-[12px] text-fg/45">{compareLabel.replace(/^vs /, "Change vs ")} · {meta.source}</p>
+        </div>
+
+        {!reduce && (
+          <div ref={hint} className="pointer-events-none absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-col items-center gap-3 text-[10.5px] uppercase tracking-[0.3em] text-fg/50">
+            Scroll
+            <span className="relative block h-10 w-px overflow-hidden bg-fg/15">
+              <span className="absolute inset-x-0 top-0 h-1/2 animate-[scrollcue_1.8s_ease-in-out_infinite] bg-clay" />
+            </span>
+            <style>{`@keyframes scrollcue{0%{transform:translateY(-100%)}100%{transform:translateY(200%)}}`}</style>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+/* ---------- Hero (from the SaaS template) wrapping the live app ---------- */
+
+export function Hero({ go, children }: { go: (v: View) => void; children: ReactNode }) {
+  return (
+    <section className="relative flex flex-col items-center px-4 pb-28 pt-24 sm:px-6">
+      <aside className="mb-8 inline-flex max-w-full flex-wrap items-center justify-center gap-2 border border-line-2 bg-card/60 px-4 py-2 text-xs text-muted backdrop-blur-sm">
+        <span className="inline-block size-1.5 animate-pulse bg-clay" />
+        <span className="text-center">{hero.badge}</span>
+        <a
+          href="#app"
+          onClick={(e) => {
+            e.preventDefault();
+            go("data");
+          }}
+          className="inline-flex items-center gap-1 whitespace-nowrap text-fg/80 transition-colors hover:text-fg"
+        >
+          {hero.badgeLink} <ArrowRight size={12} />
+        </a>
+      </aside>
+      <h2 className="text-grad mb-6 max-w-3xl text-center text-[clamp(2.25rem,5.4vw,3.75rem)] font-medium leading-[1.12] tracking-[-0.05em] text-balance">
+        {hero.title[0]}
+        <br />
+        {hero.title[1]}
+      </h2>
+      <p className="mb-10 max-w-2xl text-center text-[15px] text-muted text-pretty">{hero.subtitle}</p>
+      <a
+        href="#app"
+        onClick={(e) => {
+          e.preventDefault();
+          go("overview");
+        }}
+        className="relative z-10 inline-flex h-12 items-center gap-2 bg-gradient-to-b from-fg via-fg/95 to-fg/70 px-8 text-[15px] font-medium text-card transition-transform duration-300 hover:scale-105 active:scale-95"
+      >
+        {hero.cta} <ArrowRight size={16} />
+      </a>
+
+      <div className="relative mt-16 w-full max-w-[1260px]">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute left-1/2 top-[-12%] h-[70%] w-[95%] -translate-x-1/2 bg-[radial-gradient(ellipse_50%_45%_at_50%_50%,rgba(226,114,91,0.22),rgba(13,60,38,0.10)_45%,transparent_72%)]"
+        />
+        {children}
+      </div>
+    </section>
+  );
+}
+
+/* ---------- Floating status bar ---------- */
+
+export function FloatBar({ go }: { go: (v: View) => void }) {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const app = document.getElementById("app");
+      const foot = document.getElementById("footer");
+      const past = window.scrollY > window.innerHeight * 1.9;
+      const r = app?.getBoundingClientRect();
+      const vh = window.innerHeight;
+      // Only while the dashboard itself is out of view, so it never covers a chart.
+      const away = r ? r.top > vh * 0.92 || r.bottom < vh * 0.4 : true;
+      const atFoot = foot ? foot.getBoundingClientRect().top < vh : false;
+      setShow(past && away && !atFoot);
+    };
+    const on = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", on, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", on);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  return (
+    <div
+      aria-hidden={!show}
+      className={cn(
+        "fixed bottom-[calc(18px+env(safe-area-inset-bottom,0px))] left-1/2 z-40 flex max-w-[calc(100vw-32px)] -translate-x-1/2 items-center gap-1 border border-line-2 bg-frame/90 py-1.5 pl-4 pr-1.5 shadow-[0_18px_40px_-16px_rgba(13,60,38,0.45)] backdrop-blur-xl transition-[transform,opacity] duration-700 ease-out-expo",
+        show ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-[150%] opacity-0",
+      )}
+    >
+      {kpis.slice(0, 3).map((k, i) => {
+        const c = pctChange(k.value, k.previous);
+        const good = k.goodWhen === "down" ? c < 0 : c > 0;
+        return (
+          <span key={k.label} className={cn("flex items-center gap-2 whitespace-nowrap pr-4 text-[12.5px] text-muted", i === 2 && "max-[420px]:hidden")}>
+            <i className={cn("size-1.5", good ? "bg-sage" : "bg-clay")} />
+            <span className="max-sm:hidden">{k.label}</span>
+            <b className="num font-semibold text-fg">{fmt(k.value, k.format === "number" ? "compact" : k.format, k.decimals)}</b>
+          </span>
+        );
+      })}
+      <a
+        href="#app"
+        tabIndex={show ? 0 : -1}
+        onClick={(e) => {
+          e.preventDefault();
+          go("overview");
+        }}
+        className="inline-flex h-9 items-center bg-fg px-4 text-[12.5px] font-medium text-card transition-colors hover:bg-fg-2"
+      >
+        Open dashboard
+      </a>
+    </div>
+  );
+}
+
+/* ---------- Footer (the alabaster band) ---------- */
+
+export function Footer() {
+  return (
+    <footer id="footer" className="bg-fg text-card">
+      <div className="mx-auto grid max-w-7xl gap-10 px-6 py-14 md:grid-cols-[1.4fr_1fr_1fr]">
+        <div>
+          <div className="whitespace-nowrap text-[clamp(2rem,4.4vw,3.6rem)] leading-none tracking-[0.08em]">
+            <span className="wordmark">
+              {meta.wordmark}<span aria-hidden className="ml-[0.05em] inline-block size-[0.17em] bg-clay" />
+            </span>
+          </div>
+          <p className="mt-4 max-w-sm text-[13px] text-card/70">{meta.product} · built for the competition brief.</p>
+        </div>
+        <div className="text-[12.5px]">
+          <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-card/50">Source</div>
+          <p className="text-card/80">{meta.source}</p>
+        </div>
+        <div className="text-[12.5px]">
+          <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-card/50">Updated</div>
+          <p className="text-card/80">{meta.updated}</p>
+        </div>
+      </div>
+      <div className="h-2 bg-clay" />
+    </footer>
+  );
+}
