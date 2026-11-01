@@ -275,6 +275,19 @@ export const aiPlays = [
   },
 ];
 
+/** Below the intro images: the mission, then the three solutions. */
+export const mission = {
+  points: [
+    { icon: "plate" as const, text: "Feed more people and eliminate hunger" },
+    { icon: "bin" as const, text: "Reduce food waste" },
+  ],
+  solutions: [
+    { icon: "forecast" as const, title: "AI demand forecasting", body: "Buy what will sell, not what might." },
+    { icon: "fresh" as const, title: "Freshness monitoring", body: "Know how long every batch has left." },
+    { icon: "route" as const, title: "Smart redistribution", body: "Send food where it will be used before it spoils." },
+  ],
+};
+
 /** Overview: the pitch. NEXUS Harvest Lifeline, one mission, three AI systems. */
 export const lifeline = {
   name: "NEXUS Harvest Lifeline",

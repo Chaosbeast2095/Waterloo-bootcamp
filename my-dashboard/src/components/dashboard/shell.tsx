@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { ArrowRight, Menu, X } from "lucide-react";
+import { ArrowRight, Menu, Thermometer, Trash2, TrendingUp, Truck, Utensils, X } from "lucide-react";
 import { useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { Logo } from "./logo";
-import { hero, intro, meta } from "@/data/dashboard";
+import { hero, intro, meta, mission } from "@/data/dashboard";
 import { buildFacts } from "./widgets";
 
 export type View = "overview" | "data" | "insights";
@@ -213,6 +213,55 @@ export function ScrollIntro() {
             <style>{`@keyframes scrollcue{0%{transform:translateY(-100%)}100%{transform:translateY(200%)}}`}</style>
           </div>
         )}
+      </div>
+    </section>
+  );
+}
+
+/* ---------- Mission + solutions, straight after the intro images ---------- */
+
+const MISSION_ICONS = { plate: Utensils, bin: Trash2, forecast: TrendingUp, fresh: Thermometer, route: Truck };
+
+export function Mission() {
+  return (
+    <section aria-labelledby="mission" className="mx-auto grid max-w-5xl gap-16 px-4 pb-8 pt-24 sm:px-6">
+      <div>
+        <h2 id="mission" className="text-grad text-center text-[clamp(2rem,4.6vw,3.25rem)] font-medium tracking-[-0.04em]">
+          Our mission
+        </h2>
+        <ul className="m-0 mt-10 grid list-none gap-4 p-0 md:grid-cols-2">
+          {mission.points.map((p) => {
+            const Icon = MISSION_ICONS[p.icon];
+            return (
+              <li key={p.text} className="flex items-center gap-5 rounded-2xl! border border-line bg-card p-6">
+                <span className="grid size-16 shrink-0 place-items-center rounded-full! bg-clay/15 text-clay">
+                  <Icon className="size-7" strokeWidth={1.8} />
+                </span>
+                <span className="text-[clamp(1.1rem,2vw,1.35rem)] font-semibold leading-snug tracking-tight text-fg">{p.text}</span>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+      <div>
+        <h2 className="text-grad text-center text-[clamp(2rem,4.6vw,3.25rem)] font-medium tracking-[-0.04em]">Solutions</h2>
+        <ul className="m-0 mt-10 grid list-none gap-4 p-0 md:grid-cols-3">
+          {mission.solutions.map((p, i) => {
+            const Icon = MISSION_ICONS[p.icon];
+            return (
+              <li key={p.title} className="flex flex-col items-center rounded-2xl! border border-line bg-card p-6 text-center">
+                <span className="relative grid size-16 place-items-center rounded-full! bg-fg text-card">
+                  <Icon className="size-7" strokeWidth={1.8} />
+                  <span className="num absolute -right-1 -top-1 grid size-6 place-items-center rounded-full! bg-clay text-[11px] font-semibold text-card">
+                    {i + 1}
+                  </span>
+                </span>
+                <span className="mt-4 text-[16px] font-semibold text-fg">{p.title}</span>
+                <span className="mt-1 text-[13px] text-muted">{p.body}</span>
+              </li>
+            );
+          })}
+        </ul>
       </div>
     </section>
   );

@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { AppFrame } from "@/components/dashboard/app-frame";
-import { FloatBar, Footer, Hero, Navigation, ScrollIntro, type View } from "@/components/dashboard/shell";
+import { FloatBar, Footer, Hero, Mission, Navigation, ScrollIntro, type View } from "@/components/dashboard/shell";
 import { trend } from "@/data/dashboard";
 
 export default function App() {
@@ -24,6 +24,7 @@ export default function App() {
       <Navigation view={view} go={go} reset={reset} />
       <main>
         <ScrollIntro />
+        <Mission />
         <Hero go={go}>
           <AppFrame
             view={view}
