@@ -21,7 +21,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen overflow-x-clip bg-page text-fg">
-      <Navigation view={view} go={go} reset={reset} />
+      <Navigation go={go} />
       <main>
         <ScrollIntro />
         <Mission />

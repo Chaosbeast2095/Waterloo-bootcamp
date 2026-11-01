@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { ArrowRight, Menu, Thermometer, TrendingUp, Truck, X } from "lucide-react";
+import { ArrowRight, Thermometer, TrendingUp, Truck } from "lucide-react";
 import { useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { Logo } from "./logo";
@@ -21,97 +21,26 @@ export function Wordmark({ className }: { className?: string }) {
   return <Logo className={cn("w-[104px]", className)} title={meta.product} />;
 }
 
-/* ---------- Navigation (from the SaaS template) ---------- */
+/* ---------- Navigation: wordmark + one call to action ---------- */
 
-export function Navigation({
-  view,
-  go,
-  reset,
-}: {
-  view: View;
-  go: (v: View) => void;
-  reset: () => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const link = (v: (typeof VIEWS)[number], mobile = false) => (
-    <a
-      key={v.id}
-      href="#app"
-      onClick={(e) => {
-        e.preventDefault();
-        go(v.id);
-        setOpen(false);
-      }}
-      className={cn(
-        "text-[13.5px] transition-colors duration-300",
-        mobile && "py-2",
-        view === v.id ? "text-fg" : "text-fg/55 hover:text-fg",
-      )}
-    >
-      {v.label}
-    </a>
-  );
+export function Navigation({ go }: { go: (v: View) => void }) {
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-line bg-page/80 backdrop-blur-md">
-      <nav className="relative mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
+      <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
         <a href="#top" className="text-fg">
           <Wordmark />
         </a>
-        <div className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-8 md:flex">
-          {VIEWS.map((v) => link(v))}
-        </div>
-        <div className="hidden items-center gap-3 md:flex">
-          <button
-            type="button"
-            onClick={reset}
-            className="h-10 cursor-pointer px-4 text-[13.5px] font-medium text-fg transition-colors hover:bg-fg/[0.07]"
-          >
-            Reset view
-          </button>
-          <a
-            href="#app"
-            onClick={(e) => {
-              e.preventDefault();
-              go("overview");
-            }}
-            className="inline-flex h-10 items-center bg-fg px-5 text-[13.5px] font-medium text-card transition-colors hover:bg-fg-2"
-          >
-            Open dashboard
-          </a>
-        </div>
-        <button
-          type="button"
-          className="cursor-pointer p-1.5 text-fg md:hidden"
-          onClick={() => setOpen(!open)}
-          aria-label="Toggle menu"
-          aria-expanded={open}
+        <a
+          href="#app"
+          onClick={(e) => {
+            e.preventDefault();
+            go("overview");
+          }}
+          className="inline-flex h-10 items-center bg-fg px-5 text-[13.5px] font-medium text-card transition-colors hover:bg-fg-2"
         >
-          {open ? <X size={24} /> : <Menu size={24} />}
-        </button>
+          Open dashboard
+        </a>
       </nav>
-      {open && (
-        <div className="animate-slide-down border-t border-line bg-page/95 backdrop-blur-md md:hidden">
-          <div className="flex flex-col gap-2 px-6 py-4">
-            {VIEWS.map((v) => link(v, true))}
-            <div className="mt-2 flex gap-2 border-t border-line pt-4">
-              <button type="button" onClick={reset} className="h-10 flex-1 border border-line-2 text-[13.5px]">
-                Reset view
-              </button>
-              <a
-                href="#app"
-                onClick={(e) => {
-                  e.preventDefault();
-                  go("overview");
-                  setOpen(false);
-                }}
-                className="inline-flex h-10 flex-1 items-center justify-center bg-fg text-[13.5px] font-medium text-card"
-              >
-                Open dashboard
-              </a>
-            </div>
-          </div>
-        </div>
-      )}
     </header>
   );
 }
