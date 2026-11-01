@@ -20,10 +20,16 @@ import {
   breakdown,
   compareLabel,
   aiPlays,
+  budget,
+  calendar,
+  categories,
+  countries,
   hunger,
   lifeline,
   kpis,
   notes,
+  pilotGoal,
+  seasons,
   segments,
   supplyChain,
   targets,
@@ -644,6 +650,216 @@ export function DataView({ query }: { query: string }) {
         <SupplyTable />
         <SupplyChart />
       </div>
+      <div className="grid min-w-0 gap-3 xl:col-span-2">
+        <h3 className="flex items-center gap-2.5 text-[17px] font-semibold tracking-tight text-fg">
+          <i className="size-2.5 rounded-full!" style={{ background: SERIES.hunger }} />
+          Country profile
+          <span className="font-normal text-muted">(challenge workbook)</span>
+        </h3>
+        <CountryTable />
+        <div className="grid gap-4 md:grid-cols-2">
+          <RateBars title="Waste rate by product category" note="Sample volumes; not added to country totals." rows={categories.map((c) => ({ label: c.label, rate: c.rate, sub: `${fmt(c.volume)} t` }))} />
+          <RateBars title="Waste rate by season" note="Aggregate rates, not split by country." rows={seasons.map((c) => ({ label: c.label, rate: c.rate }))} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Research paper data: country profile, rates, pilot plan ---------- */
+
+function MiniRing({ pct, color, size = 34 }: { pct: number; color: string; size?: number }) {
+  const r = (size - 5) / 2;
+  const c = 2 * Math.PI * r;
+  return (
+    <svg width={size} height={size} className="-rotate-90 shrink-0" aria-hidden>
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgb(13 60 38 / 0.09)" strokeWidth={5} />
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={5} strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - pct / 100)} />
+    </svg>
+  );
+}
+
+const tonnes = (v: number) => `${new Intl.NumberFormat("en-US").format(v)} t`;
+
+export function CountryTable() {
+  return (
+    <section className="min-w-0 overflow-hidden rounded-2xl! border border-line bg-card">
+      <div className="scroll-thin overflow-x-auto">
+        <table className="w-full min-w-[640px] border-collapse text-[13px]">
+          <thead>
+            <tr className="bg-fg text-card">
+              {["Market", "Annual handled", "Waste rate", "Implied waste", "Forecast accuracy"].map((h, i) => (
+                <th key={h} className={cn("px-5 py-3.5 text-[12px] font-semibold", i === 0 ? "text-left" : "text-right")}>
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {countries.map((c) => (
+              <tr key={c.country} className="border-b border-line transition-colors last:border-b-0 hover:bg-fg/[0.03]">
+                <td className="px-5 py-3">
+                  <span className="flex items-center gap-2.5 font-medium text-fg">
+                    <FlagIcon code={c.flag} />
+                    {c.country}
+                  </span>
+                </td>
+                <td className="num px-5 py-3 text-right text-fg/80">{tonnes(c.handled)}</td>
+                <td className="px-5 py-3">
+                  <span className="flex items-center justify-end gap-2.5">
+                    <span className="num font-semibold text-fg">{c.rate}%</span>
+                    <MiniRing pct={c.rate} color={PALETTE[0]} />
+                  </span>
+                </td>
+                <td className="num px-5 py-3 text-right font-semibold text-fg">{tonnes(c.waste)}</td>
+                <td className="px-5 py-3">
+                  <span className="flex items-center justify-end gap-2.5">
+                    <span className="num font-semibold text-fg">{c.accuracy}%</span>
+                    <MiniRing pct={c.accuracy} color={SERIES.hunger} />
+                  </span>
+                </td>
+              </tr>
+            ))}
+            <tr className="bg-frame/60">
+              <td className="px-5 py-3 font-semibold text-fg">Total</td>
+              <td className="num px-5 py-3 text-right font-semibold text-fg">{tonnes(countries.reduce((t, c) => t + c.handled, 0))}</td>
+              <td className="px-5 py-3 text-right text-faint">—</td>
+              <td className="num px-5 py-3 text-right font-semibold text-fg">{tonnes(countries.reduce((t, c) => t + c.waste, 0))}</td>
+              <td className="px-5 py-3 text-right text-faint">—</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+function RateBars({ title, note, rows }: { title: string; note: string; rows: { label: string; rate: number; sub?: string }[] }) {
+  const reduce = useReducedMotion();
+  const max = Math.max(...rows.map((r) => r.rate));
+  return (
+    <section className="min-w-0 rounded-2xl! border border-line bg-card p-5 sm:p-6">
+      <h4 className="text-[14px] font-semibold text-fg">{title}</h4>
+      <p className="mt-0.5 text-[11.5px] text-faint">{note}</p>
+      <ul className="m-0 mt-5 grid list-none gap-4 p-0">
+        {rows.map((r, i) => (
+          <li key={r.label}>
+            <div className="flex items-baseline justify-between gap-3 text-[13px]">
+              <span className="font-medium text-fg">
+                {r.label}
+                {r.sub && <span className="num ml-2 text-[11.5px] font-normal text-faint">{r.sub}</span>}
+              </span>
+              <span className="num font-semibold text-fg">{r.rate}%</span>
+            </div>
+            <div className="mt-1.5 h-2 overflow-hidden rounded-full! bg-fg/[0.07]">
+              <motion.div
+                className="h-full origin-left rounded-full!"
+                style={{ width: `${(r.rate / max) * 100}%`, background: i === 0 ? PALETTE[0] : "rgb(13 60 38 / 0.75)" }}
+                initial={reduce ? false : { scaleX: 0 }}
+                whileInView={{ scaleX: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8, ease: EASE, delay: i * 0.06 }}
+              />
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+/** Overview: budget donut, pilot goal, 12-month plan and five country strategies. */
+export function PilotPlan() {
+  const total = budget.reduce((t, b) => t + b.amount, 0);
+  const size = 200;
+  const stroke = 26;
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  // Start offset of each arc = sum of the lengths before it.
+  const lens = budget.map((b) => (b.amount / total) * c);
+  const starts = lens.map((_, i) => lens.slice(0, i).reduce((t, l) => t + l, 0));
+  // Sequential emerald ramp, darkest = largest line.
+  const shade = (i: number) => `rgb(13 60 38 / ${1 - i * 0.1})`;
+  return (
+    <div className="grid gap-4">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
+        <section className="rounded-2xl! border border-line bg-card p-5 sm:p-6">
+          <h4 className="text-[14.5px] font-semibold text-fg">Where the $1M pilot goes</h4>
+          <p className="mt-0.5 text-[11.5px] text-faint">Illustrative budget, USD. One deep India pilot, not five national rollouts.</p>
+          <div className="mt-5 grid gap-6 sm:grid-cols-[200px_minmax(0,1fr)] sm:items-center">
+            <div className="relative shrink-0 justify-self-center" style={{ width: size, height: size }}>
+              <svg width={size} height={size} className="-rotate-90" aria-hidden>
+                {budget.map((b, i) => (
+                  <circle key={b.label} cx={size / 2} cy={size / 2} r={r} fill="none" stroke={i === 0 ? PALETTE[0] : shade(i)} strokeWidth={stroke} strokeDasharray={`${Math.max(lens[i] - 2, 0)} ${c}`} strokeDashoffset={-starts[i]} />
+                ))}
+              </svg>
+              <div className="absolute inset-0 grid place-content-center text-center">
+                <div className="num text-[26px] font-semibold tracking-tight text-fg">$1M</div>
+                <div className="text-[11px] text-faint">8 line items</div>
+              </div>
+            </div>
+            <ul className="m-0 flex w-full min-w-0 list-none flex-col gap-2 p-0 text-[12.5px]">
+              {budget.map((b, i) => (
+                <li key={b.label} className="flex items-center gap-2.5">
+                  <i className="size-2.5 shrink-0 rounded-full!" style={{ background: i === 0 ? PALETTE[0] : shade(i) }} />
+                  <span className="min-w-0 flex-1 truncate text-fg/85">{b.label}</span>
+                  <span className="num shrink-0 font-semibold text-fg">${fmt(b.amount / 1000)}K</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+        <section className="flex flex-col rounded-2xl! bg-fg p-5 text-card sm:p-6">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-clay">First-year goal</div>
+          <div className="mt-3 flex items-center gap-5">
+            <span className="grid size-28 shrink-0 place-items-center rounded-full! border-[10px] border-clay/80">
+              <span className="num text-[18px] font-semibold">{pilotGoal.range}</span>
+            </span>
+            <p className="text-[13.5px] leading-relaxed text-card/85">{pilotGoal.text}</p>
+          </div>
+          <p className="mt-auto border-t border-card/15 pt-4 text-[12.5px] text-card/70">{pilotGoal.example} A testable target, not a forecast.</p>
+        </section>
+      </div>
+
+      <section className="rounded-2xl! border border-line bg-card p-5 sm:p-6">
+        <h4 className="text-[14.5px] font-semibold text-fg">12-month plan and stage gates</h4>
+        <ol className="m-0 mt-5 grid list-none gap-5 p-0 md:grid-cols-3 xl:grid-cols-6">
+          {calendar.map((st, i) => (
+            <li key={st.period} className="relative">
+              {i < calendar.length - 1 && <span aria-hidden className="absolute left-12 right-0 top-5 hidden h-px bg-line-2 xl:block" />}
+              <span className={cn("num grid size-10 place-items-center rounded-full! border text-[13px] font-semibold", i === 0 ? "border-transparent bg-clay text-card" : "border-line-2 bg-frame text-fg")}>
+                {i + 1}
+              </span>
+              <div className="mt-3 text-[12px] font-semibold uppercase tracking-[0.1em] text-clay">{st.period}</div>
+              <p className="mt-1 text-[12.5px] leading-snug text-fg">{st.build}</p>
+              <p className="mt-2 text-[11.5px] leading-snug text-faint">Gate: {st.gate}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section className="rounded-2xl! border border-line bg-card p-5 sm:p-6">
+        <h4 className="text-[14.5px] font-semibold text-fg">Country by country</h4>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+          {countries.map((c) => (
+            <article key={c.country} className="flex flex-col rounded-xl! border border-line bg-frame/40 p-4">
+              <div className="flex items-center gap-2.5">
+                <FlagIcon code={c.flag} />
+                <span className="text-[14px] font-semibold text-fg">{c.country}</span>
+              </div>
+              <div className="mt-2 text-[12.5px] font-medium leading-snug text-clay-deep">{c.focus}</div>
+              <p className="mt-1.5 text-[12px] leading-snug text-muted">{c.diagnosis}</p>
+              <div className="mt-auto flex flex-wrap gap-1.5 pt-3">
+                {c.lead.map((m) => (
+                  <span key={m} className="rounded-full! border border-line-2 bg-card px-2 py-0.5 text-[10.5px] font-medium text-fg">
+                    {m}
+                  </span>
+                ))}
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
@@ -998,6 +1214,21 @@ export function buildInsights() {
     title: "Almost half the food never makes it",
     figure: `${Math.round((lost / start) * 100)}%`,
     body: `${fmt(lost)} t of the ${fmt(start)} t that enters production is lost along the way, from harvest through to consumers.`,
+    tone: "bad",
+  });
+  const byAcc = [...countries].sort((a, b) => a.accuracy - b.accuracy);
+  out.push({
+    tag: "Forecasting",
+    title: `${byAcc[0].country} has the weakest forecasts and the highest waste rate`,
+    figure: `${byAcc[0].accuracy}%`,
+    body: `Forecast accuracy runs from ${byAcc[0].accuracy}% in ${byAcc[0].country} to ${byAcc[byAcc.length - 1].accuracy}% in the ${byAcc[byAcc.length - 1].country}. Lower accuracy goes with higher waste, though weather and infrastructure may also explain it.`,
+    tone: "neutral",
+  });
+  out.push({
+    tag: "Season",
+    title: `${seasons[0].label} is the worst time for waste`,
+    figure: `${seasons[0].rate}%`,
+    body: `Nearly three times the winter rate (${seasons[seasons.length - 1].rate}%). Fresh fruit is the riskiest category at ${categories[0].rate}%.`,
     tone: "bad",
   });
   return out;

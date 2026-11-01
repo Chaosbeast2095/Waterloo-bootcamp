@@ -4,7 +4,7 @@ import { Bell, LayoutDashboard, RotateCcw, Search, Sparkles, Table2 } from "luci
 import { Mark } from "./logo";
 import { cn } from "@/lib/utils";
 import { hunger, meta, notes, waste } from "@/data/dashboard";
-import { ColumnChart, DataView, FactRow, Insights, Lifeline, NoteCard, SERIES, SupplyChart, buildInsights } from "./widgets";
+import { ColumnChart, DataView, FactRow, Insights, Lifeline, NoteCard, PilotPlan, SERIES, SupplyChart, buildInsights } from "./widgets";
 import type { View } from "./shell";
 
 const NAV: { id: View; label: string; icon: typeof LayoutDashboard; count?: number }[] = [
@@ -118,6 +118,7 @@ export function AppFrame({
             {view === "overview" && (
               <div className="grid gap-4">
                 <Lifeline />
+                <PilotPlan />
                 <div className="grid gap-4 xl:grid-cols-2">
                   <ColumnChart data={waste} color={SERIES.waste} />
                   <ColumnChart data={hunger} color={SERIES.hunger} />

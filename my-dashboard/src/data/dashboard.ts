@@ -278,14 +278,81 @@ export const aiPlays = [
 /** Below the intro images: the mission, then the three solutions. */
 export const mission = {
   points: [
-    { icon: "plate" as const, text: "Feed more people and eliminate hunger" },
-    { icon: "bin" as const, text: "Reduce food waste" },
+    { icon: "🍽️", text: "Feed more people and eliminate hunger" },
+    { icon: "🗑️", text: "Reduce food waste" },
   ],
   solutions: [
     { icon: "forecast" as const, title: "AI demand forecasting", body: "Buy what will sell, not what might." },
     { icon: "fresh" as const, title: "Freshness monitoring", body: "Know how long every batch has left." },
     { icon: "route" as const, title: "Smart redistribution", body: "Send food where it will be used before it spoils." },
   ],
+};
+
+/* ---------- From "NEXUS Harvest Lifeline: Research & Country AI Strategy" (1 Nov 2026) ---------- */
+
+/** Country table from the challenge workbook [CASE]. Implied waste = handled × waste rate. */
+export const countries: {
+  country: string;
+  flag: Flag;
+  handled: number;
+  rate: number;
+  waste: number;
+  accuracy: number;
+  focus: string;
+  lead: string[];
+  diagnosis: string;
+}[] = [
+  { country: "India", flag: "IN", handled: 120000, rate: 15, waste: 18000, accuracy: 67, focus: "Volume-led prevention", lead: ["DemandPulse", "FreshClock", "StormSwitch"], diagnosis: "High opportunity from volume and forecast gaps. Pilot here first." },
+  { country: "Brazil", flag: "BR", handled: 70000, rate: 12, waste: 8400, accuracy: 74, focus: "Climate-responsive redistribution", lead: ["StormSwitch", "DemandPulse", "RescueMesh"], diagnosis: "Second-largest waste volume; the next scaling market." },
+  { country: "Canada", flag: "CA", handled: 38000, rate: 10, waste: 3800, accuracy: 88, focus: "Quality, traceability, secondary market", lead: ["FreshClock", "RescueMesh"], diagnosis: "Forecasting is already strong; target residual loss." },
+  { country: "UK", flag: "GB", handled: 30000, rate: 10, waste: 3000, accuracy: 91, focus: "Precision and transparent reporting", lead: ["FreshClock", "RescueMesh"], diagnosis: "Best forecasting of the five; the quality benchmark." },
+  { country: "Kenya", flag: "KE", handled: 18000, rate: 23, waste: 4140, accuracy: 61, focus: "Offline harvest-to-market", lead: ["FarmLink", "StormSwitch", "FreshClock"], diagnosis: "Highest waste rate and lowest forecast accuracy." },
+];
+
+/** Waste rate by product category (sample volumes; not additive to country totals) [CASE]. */
+export const categories = [
+  { label: "Fresh fruit", rate: 24, volume: 20000 },
+  { label: "Vegetables", rate: 19, volume: 18000 },
+  { label: "Dairy", rate: 16, volume: 12000 },
+  { label: "Baked goods", rate: 11, volume: 15000 },
+  { label: "Frozen foods", rate: 4, volume: 10000 },
+];
+
+/** Waste rate by season (aggregate, not by country) [CASE]. */
+export const seasons = [
+  { label: "Monsoon / rainy", rate: 26 },
+  { label: "Summer", rate: 22 },
+  { label: "Spring", rate: 13 },
+  { label: "Winter", rate: 9 },
+];
+
+/** $1M pilot allocation, USD (illustrative budget) [PROPOSAL]. */
+export const budget = [
+  { label: "Data cleaning, integration, traceability", amount: 190000 },
+  { label: "Demand forecasts and evaluation", amount: 170000 },
+  { label: "Temperature monitoring and QA", amount: 165000 },
+  { label: "Routing and surplus matching", amount: 145000 },
+  { label: "Site implementation and staff training", amount: 130000 },
+  { label: "Farmer and community partnerships", amount: 70000 },
+  { label: "Independent evaluation, legal and privacy", amount: 70000 },
+  { label: "Contingency", amount: 60000 },
+];
+
+/** 12-month implementation calendar and stage gates [PROPOSAL]. */
+export const calendar = [
+  { period: "Weeks 1–4", build: "Baseline audit, facility selection, data dictionary, safety and legal mapping", gate: "≥90% critical transaction coverage" },
+  { period: "Weeks 5–8", build: "Data connectors, baseline models, sensor installation, audit trail", gate: "Stable telemetry and manual QA SOPs" },
+  { period: "Weeks 9–12", build: "AI in shadow mode with no automatic actions", gate: "Beat baseline error without worse stockouts" },
+  { period: "Months 4–6", build: "Controlled DemandPulse / FreshClock launch; phased StormSwitch", gate: "Human compliance and quality checks pass" },
+  { period: "Months 7–9", build: "RescueMesh / FarmLink in vetted channels; matched control evaluation", gate: "No unsafe distributions or farmer harm" },
+  { period: "Months 10–12", build: "Independent impact assessment and country adaptation pack", gate: "Scale only if net benefit and safety gates pass" },
+];
+
+/** First-year goal [TARGET]: a testable goal, not a forecast. */
+export const pilotGoal = {
+  range: "10–15%",
+  text: "Relative reduction in measured pilot-site food loss versus a matched baseline, without more stockouts, safety incidents or unfair supplier outcomes.",
+  example: "A 10% cut on India's 18,000 t baseline would be 1,800 t a year.",
 };
 
 /** Overview: the pitch. NEXUS Harvest Lifeline, one mission, three AI systems. */

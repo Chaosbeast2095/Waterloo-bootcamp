@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { ArrowRight, Menu, Thermometer, Trash2, TrendingUp, Truck, Utensils, X } from "lucide-react";
+import { ArrowRight, Menu, Thermometer, TrendingUp, Truck, X } from "lucide-react";
 import { useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { Logo } from "./logo";
@@ -220,7 +220,7 @@ export function ScrollIntro() {
 
 /* ---------- Mission + solutions, straight after the intro images ---------- */
 
-const MISSION_ICONS = { plate: Utensils, bin: Trash2, forecast: TrendingUp, fresh: Thermometer, route: Truck };
+const MISSION_ICONS = { forecast: TrendingUp, fresh: Thermometer, route: Truck };
 
 export function Mission() {
   return (
@@ -230,17 +230,14 @@ export function Mission() {
           Our mission
         </h2>
         <ul className="m-0 mt-10 grid list-none gap-4 p-0 md:grid-cols-2">
-          {mission.points.map((p) => {
-            const Icon = MISSION_ICONS[p.icon];
-            return (
-              <li key={p.text} className="flex items-center gap-5 rounded-2xl! border border-line bg-card p-6">
-                <span className="grid size-16 shrink-0 place-items-center rounded-full! bg-clay/15 text-clay">
-                  <Icon className="size-7" strokeWidth={1.8} />
-                </span>
-                <span className="text-[clamp(1.1rem,2vw,1.35rem)] font-semibold leading-snug tracking-tight text-fg">{p.text}</span>
-              </li>
-            );
-          })}
+          {mission.points.map((p) => (
+            <li key={p.text} className="flex items-center gap-5 rounded-2xl! border border-line bg-card p-6">
+              <span aria-hidden className="grid size-20 shrink-0 place-items-center rounded-full! bg-raised/70 text-[42px] leading-none shadow-[inset_0_0_0_1px_rgba(13,60,38,0.08)]">
+                {p.icon}
+              </span>
+              <span className="text-[clamp(1.1rem,2vw,1.35rem)] font-semibold leading-snug tracking-tight text-fg">{p.text}</span>
+            </li>
+          ))}
         </ul>
       </div>
       <div>
