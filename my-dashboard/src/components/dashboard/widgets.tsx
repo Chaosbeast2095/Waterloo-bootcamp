@@ -14,6 +14,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { BR, CA, GB, IN, KE } from "country-flag-icons/react/3x2";
+import celestialLogo from "@/assets/partners/celestial.jpg";
 import { cn } from "@/lib/utils";
 import { fmt, pctChange, signed } from "@/lib/format";
 import {
@@ -21,6 +22,7 @@ import {
   compareLabel,
   aiPlays,
   budget,
+  budgetTitle,
   calendar,
   categories,
   countries,
@@ -28,6 +30,7 @@ import {
   lifeline,
   kpis,
   notes,
+  partners,
   pilotGoal,
   seasons,
   segments,
@@ -771,22 +774,22 @@ function RateBars({ title, note, rows }: { title: string; note: string; rows: { 
 /** Overview: budget donut, pilot goal, 12-month plan and five country strategies. */
 export function PilotPlan() {
   const total = budget.reduce((t, b) => t + b.amount, 0);
-  const size = 200;
-  const stroke = 26;
+  const size = 300;
+  const stroke = 38;
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   // Start offset of each arc = sum of the lengths before it.
   const lens = budget.map((b) => (b.amount / total) * c);
   const starts = lens.map((_, i) => lens.slice(0, i).reduce((t, l) => t + l, 0));
   // Sequential emerald ramp, darkest = largest line.
-  const shade = (i: number) => `rgb(13 60 38 / ${1 - i * 0.1})`;
+  const shade = (i: number) => `rgb(13 60 38 / ${1 - i * 0.075})`;
   return (
     <div className="grid gap-4">
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
-        <section className="rounded-2xl! border border-line bg-card p-5 sm:p-6">
-          <h4 className="text-[14.5px] font-semibold text-fg">Where the $1M pilot goes</h4>
-          <p className="mt-0.5 text-[11.5px] text-faint">Illustrative budget, USD. One deep India pilot, not five national rollouts.</p>
-          <div className="mt-5 grid gap-6 sm:grid-cols-[200px_minmax(0,1fr)] sm:items-center">
+      <div className="grid gap-4">
+        <section className="rounded-2xl! border border-line bg-card p-5 sm:p-8">
+          <h4 className="text-center text-[18px] font-semibold text-fg">{budgetTitle.title}</h4>
+          <p className="mt-1 text-center text-[12.5px] text-faint">{budgetTitle.note}</p>
+          <div className="mt-7 grid gap-8">
             <div className="relative shrink-0 justify-self-center" style={{ width: size, height: size }}>
               <svg width={size} height={size} className="-rotate-90" aria-hidden>
                 {budget.map((b, i) => (
@@ -794,15 +797,15 @@ export function PilotPlan() {
                 ))}
               </svg>
               <div className="absolute inset-0 grid place-content-center text-center">
-                <div className="num text-[26px] font-semibold tracking-tight text-fg">$1M</div>
-                <div className="text-[11px] text-faint">8 line items</div>
+                <div className="num text-[36px] font-semibold tracking-tight text-fg">{budgetTitle.total}</div>
+                <div className="text-[12px] text-faint">{budget.length} line items</div>
               </div>
             </div>
-            <ul className="m-0 flex w-full min-w-0 list-none flex-col gap-2 p-0 text-[12.5px]">
+            <ul className="m-0 mx-auto grid w-full max-w-4xl list-none gap-x-10 gap-y-3 p-0 text-[13.5px] md:grid-cols-2">
               {budget.map((b, i) => (
-                <li key={b.label} className="flex items-center gap-2.5">
+                <li key={b.label} className="flex items-center gap-3 border-b border-line pb-2.5">
                   <i className="size-2.5 shrink-0 rounded-full!" style={{ background: i === 0 ? PALETTE[0] : shade(i) }} />
-                  <span className="min-w-0 flex-1 truncate text-fg/85">{b.label}</span>
+                  <span className="min-w-0 flex-1 text-fg/85">{b.label}</span>
                   <span className="num shrink-0 font-semibold text-fg">${fmt(b.amount / 1000)}K</span>
                 </li>
               ))}
@@ -1236,7 +1239,7 @@ export function buildInsights() {
 
 export function NoteCard({ note, compact }: { note: { title: string; body: string }; compact?: boolean }) {
   return (
-    <div className={cn("relative overflow-hidden bg-fg text-card", compact ? "px-5 py-5" : "px-6 py-6 sm:px-8")}>
+    <div className={cn("relative overflow-hidden rounded-2xl! bg-fg text-card", compact ? "px-5 py-5" : "px-6 py-6 sm:px-8")}>
       <div className="relative z-10 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-clay">
         <Sparkles className="size-3.5" /> {note.title}
       </div>
@@ -1264,19 +1267,19 @@ export function Insights() {
           <article
             key={it.tag}
             className={cn(
-              "group animate-fade-up border border-line bg-card p-5 transition-colors duration-300 hover:border-line-2",
+              "group animate-fade-up rounded-2xl! border border-line bg-card p-6 transition-colors duration-300 hover:border-line-2",
               items.length % 2 === 1 && i === items.length - 1 && "md:col-span-2",
             )}
             style={{ animationDelay: `${i * 60}ms` }}
           >
             <div className="flex items-center justify-between gap-3">
-              <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-faint">
-                <span className="mr-2 text-clay">{String(i + 1).padStart(2, "0")}</span>
+              <span className="text-[19px] font-bold uppercase tracking-[0.08em] text-fg">
+                <span className="mr-2.5 text-clay">{String(i + 1).padStart(2, "0")}</span>
                 {it.tag}
               </span>
               <span
                 className={cn(
-                  "num px-2 py-0.5 text-[12px] font-semibold",
+                  "num rounded-full! px-3 py-1 text-[13px] font-semibold",
                   it.tone === "good" ? "bg-sage/15 text-sage" : it.tone === "bad" ? "bg-clay/15 text-clay" : "bg-fg/10 text-fg",
                 )}
               >
@@ -1288,22 +1291,42 @@ export function Insights() {
           </article>
         ))}
       </div>
-      <h3 className="mt-3 text-[15px] font-semibold text-fg">How AI can cut the waste</h3>
+      <h3 className="mt-4 text-[22px] font-semibold tracking-tight text-fg">How AI can cut the waste</h3>
       <div className="grid gap-3 md:grid-cols-2">
         {aiPlays.map((p, i) => (
           <article
             key={p.title}
-            className="animate-fade-up border border-line bg-card p-5 transition-colors duration-300 hover:border-line-2"
+            className="animate-fade-up rounded-2xl! border border-line bg-card p-6 transition-colors duration-300 hover:border-line-2"
             style={{ animationDelay: `${(items.length + i) * 60}ms` }}
           >
-            <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-faint">
-              <span className="mr-2 text-clay">AI {String(i + 1).padStart(2, "0")}</span>
-            </span>
+            <span className="text-[19px] font-bold uppercase tracking-[0.08em] text-clay">AI {String(i + 1).padStart(2, "0")}</span>
             <h4 className="mt-2 text-[15px] font-semibold text-fg">{p.title}</h4>
             <p className="mt-1.5 text-[12.5px] leading-relaxed text-muted">{p.body}</p>
           </article>
         ))}
       </div>
+      <section className="mt-4 rounded-2xl! border border-line bg-card p-6 sm:p-8">
+        <h3 className="text-[22px] font-semibold tracking-tight text-fg">Strategic partnership</h3>
+        <ul className="m-0 mt-5 grid list-none gap-4 p-0 md:grid-cols-3">
+          {partners.map((p) => (
+            <li key={p.name} className="flex items-center gap-4 rounded-xl! border border-line bg-frame/40 p-4">
+              {p.logo ? (
+                <img src={celestialLogo} alt={`${p.name} logo`} className="size-14 shrink-0 rounded-full! object-cover" />
+              ) : (
+                p.flag && (
+                  <span className="grid size-14 shrink-0 place-items-center rounded-full! bg-card shadow-[inset_0_0_0_1px_rgba(13,60,38,0.1)]">
+                    <FlagIcon code={p.flag} className="h-[22px] w-[33px]" />
+                  </span>
+                )
+              )}
+              <span className="min-w-0">
+                <span className="block text-[15px] font-semibold leading-snug text-fg">{p.name}</span>
+                {p.org && <span className="mt-0.5 block text-[12.5px] leading-snug text-muted">{p.org}</span>}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   );
 }

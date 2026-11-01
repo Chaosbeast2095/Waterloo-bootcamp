@@ -326,16 +326,26 @@ export const seasons = [
   { label: "Winter", rate: 9 },
 ];
 
-/** $1M pilot allocation, USD (illustrative budget) [PROPOSAL]. */
+/** Revised budget: physical spoilage-prevention investment, USD. */
+export const budgetTitle = { title: "Where the $800K goes", note: "Physical spoilage-prevention investment · revised budget, USD.", total: "$800K" };
 export const budget = [
-  { label: "Data cleaning, integration, traceability", amount: 190000 },
-  { label: "Demand forecasts and evaluation", amount: 170000 },
-  { label: "Temperature monitoring and QA", amount: 165000 },
-  { label: "Routing and surplus matching", amount: 145000 },
-  { label: "Site implementation and staff training", amount: 130000 },
-  { label: "Farmer and community partnerships", amount: 70000 },
-  { label: "Independent evaluation, legal and privacy", amount: 70000 },
-  { label: "Contingency", amount: 60000 },
+  { label: "Two upgraded collection and packhouse hubs", amount: 190000 },
+  { label: "Pre-cooling and crop-specific cold rooms", amount: 170000 },
+  { label: "Refrigerated transport partnerships and leases", amount: 130000 },
+  { label: "Reusable ventilated produce crates", amount: 55000 },
+  { label: "Solar power and backup systems", amount: 65000 },
+  { label: "Temperature and humidity monitoring", amount: 45000 },
+  { label: "Sorting, grading and packing equipment", amount: 45000 },
+  { label: "Surplus rescue and processing partnerships", amount: 40000 },
+  { label: "Staff training, installation and maintenance", amount: 15000 },
+  { label: "Operational contingency", amount: 45000 },
+];
+
+/** Insights footer: strategic partners. */
+export const partners: { name: string; org?: string; flag?: Flag; logo?: boolean }[] = [
+  { name: "Celestial Developers", logo: true },
+  { name: "Government of India", org: "Department of Food and Public Distribution", flag: "IN" },
+  { name: "Government of Kenya", org: "Ministry of Agriculture and Livestock Development", flag: "KE" },
 ];
 
 /** 12-month implementation calendar and stage gates [PROPOSAL]. */
@@ -385,7 +395,6 @@ export const lifeline = {
   rollout: [
     { step: "India", note: "Measurable pilot first", flag: "IN" as Flag },
     { step: "Kenya", note: "Next market", flag: "KE" as Flag },
-    { step: "Brazil", note: "Then scale", flag: "BR" as Flag },
   ],
   angle:
     "Prevent waste before it happens, not just discount or donate food afterwards. Actual challenge data is kept separate from projected pilot results.",

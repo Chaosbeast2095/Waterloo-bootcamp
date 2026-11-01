@@ -3,8 +3,8 @@ import { AnimatePresence, motion } from "motion/react";
 import { Bell, LayoutDashboard, RotateCcw, Search, Sparkles, Table2 } from "lucide-react";
 import { Mark } from "./logo";
 import { cn } from "@/lib/utils";
-import { hunger, meta, notes, waste } from "@/data/dashboard";
-import { ColumnChart, DataView, FactRow, Insights, Lifeline, NoteCard, PilotPlan, SERIES, SupplyChart, buildInsights } from "./widgets";
+import { meta, notes } from "@/data/dashboard";
+import { DataView, FactRow, Insights, Lifeline, NoteCard, PilotPlan, buildInsights } from "./widgets";
 import type { View } from "./shell";
 
 const NAV: { id: View; label: string; icon: typeof LayoutDashboard; count?: number }[] = [
@@ -119,11 +119,6 @@ export function AppFrame({
               <div className="grid gap-4">
                 <Lifeline />
                 <PilotPlan />
-                <div className="grid gap-4 xl:grid-cols-2">
-                  <ColumnChart data={waste} color={SERIES.waste} />
-                  <ColumnChart data={hunger} color={SERIES.hunger} />
-                </div>
-                <SupplyChart />
                 {notes[0] && <NoteCard note={notes[0]} compact />}
               </div>
             )}
