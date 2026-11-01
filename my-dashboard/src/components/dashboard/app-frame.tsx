@@ -15,7 +15,7 @@ const NAV: { id: View; label: string; icon: typeof LayoutDashboard; count?: numb
 
 const HEAD: Record<View, [string, string]> = {
   overview: ["Overview", "Food waste, hunger and supply chain losses at a glance."],
-  data: ["Data", "Food waste and hunger across five countries, side by side."],
+  data: ["Data", "Food waste and hunger across four countries, side by side."],
   insights: ["Insights", "What the data says, and where AI can cut the waste."],
 };
 

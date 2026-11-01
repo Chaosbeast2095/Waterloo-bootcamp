@@ -28,6 +28,7 @@ export type IconName =
 export const meta = {
   wordmark: "NEXUS",
   product: "Nexus",
+  tagline: "Changing the world one grain at a time",
   currency: "INR",
   updated: "1 Nov 2026",
   source: "NEXUS Foods datasets · World Bank / FAO 2024",
@@ -38,7 +39,7 @@ export const hero = {
   badgeLink: "See the data",
   title: ["Every number that matters,", "in one clear view"],
   subtitle:
-    "Food waste, hunger and supply chain losses across five countries, with the insights that follow from them.",
+    "Food waste, hunger and supply chain losses across four countries, with the insights that follow from them.",
   cta: "Explore the dashboard",
 };
 
@@ -185,7 +186,7 @@ export const targets = [
   { label: "Hours saved / month", value: 4310, target: 4000, rule: "atLeast" as const, format: "number" as Fmt },
 ];
 
-export type Flag = "IN" | "BR" | "KE" | "CA" | "GB";
+export type Flag = "IN" | "KE" | "CA" | "GB";
 
 /** One column of the Data view: a ranked box of countries, with a column chart beneath it. */
 export interface Ranking {
@@ -209,12 +210,11 @@ export const waste: Ranking = {
   format: "number",
   rows: [
     { country: "India", flag: "IN", value: 18000 },
-    { country: "Brazil", flag: "BR", value: 8400 },
     { country: "Kenya", flag: "KE", value: 4140 },
     { country: "Canada", flag: "CA", value: 3800 },
     { country: "UK", flag: "GB", value: 3000 },
   ],
-  conclusion: "India produces the highest amount of food waste among these five countries, followed by Brazil.",
+  conclusion: "India produces the highest amount of food waste among these four countries, followed by Kenya.",
   footnote: "Calculation: annual food handled × food waste percentage.",
 };
 
@@ -227,7 +227,6 @@ export const hunger: Ranking = {
   rows: [
     { country: "India", flag: "IN", value: 175.7e6, share: 12.0 },
     { country: "Kenya", flag: "KE", value: 21.2e6, share: 36.8 },
-    { country: "Brazil", flag: "BR", value: 6.4e6, share: 3.0 },
     { country: "Canada", flag: "CA", value: 1.2e6, share: 3.0 },
     { country: "UK", flag: "GB", value: null },
   ],
@@ -303,9 +302,8 @@ export const countries: {
   diagnosis: string;
 }[] = [
   { country: "India", flag: "IN", handled: 120000, rate: 15, waste: 18000, accuracy: 67, focus: "Volume-led prevention", lead: ["DemandPulse", "FreshClock", "StormSwitch"], diagnosis: "High opportunity from volume and forecast gaps. Pilot here first." },
-  { country: "Brazil", flag: "BR", handled: 70000, rate: 12, waste: 8400, accuracy: 74, focus: "Climate-responsive redistribution", lead: ["StormSwitch", "DemandPulse", "RescueMesh"], diagnosis: "Second-largest waste volume; the next scaling market." },
   { country: "Canada", flag: "CA", handled: 38000, rate: 10, waste: 3800, accuracy: 88, focus: "Quality, traceability, secondary market", lead: ["FreshClock", "RescueMesh"], diagnosis: "Forecasting is already strong; target residual loss." },
-  { country: "UK", flag: "GB", handled: 30000, rate: 10, waste: 3000, accuracy: 91, focus: "Precision and transparent reporting", lead: ["FreshClock", "RescueMesh"], diagnosis: "Best forecasting of the five; the quality benchmark." },
+  { country: "UK", flag: "GB", handled: 30000, rate: 10, waste: 3000, accuracy: 91, focus: "Precision and transparent reporting", lead: ["FreshClock", "RescueMesh"], diagnosis: "Best forecasting of the four; the quality benchmark." },
   { country: "Kenya", flag: "KE", handled: 18000, rate: 23, waste: 4140, accuracy: 61, focus: "Offline harvest-to-market", lead: ["FarmLink", "StormSwitch", "FreshClock"], diagnosis: "Highest waste rate and lowest forecast accuracy." },
 ];
 
@@ -373,7 +371,7 @@ export const lifeline = {
   pitch:
     "An AI-powered system that predicts when raw food is at risk of being wasted and finds a better destination for it before it spoils.",
   stats: [
-    { value: "18,000 t", label: "Estimated annual food waste in India", pct: 48, ring: "48% of the five-country total" },
+    { value: "18,000 t", label: "Estimated annual food waste in India", pct: 62, ring: "62% of the four-country total" },
     { value: "26%", label: "Waste rate during monsoon season", pct: 26, ring: "of food handled" },
     { value: "24%", label: "Fresh fruit waste rate", pct: 24, ring: "of fresh fruit" },
   ],

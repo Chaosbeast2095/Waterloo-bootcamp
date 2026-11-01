@@ -13,7 +13,7 @@ import {
   Zap,
   type LucideIcon,
 } from "lucide-react";
-import { BR, CA, GB, IN, KE } from "country-flag-icons/react/3x2";
+import { CA, GB, IN, KE } from "country-flag-icons/react/3x2";
 import celestialLogo from "@/assets/partners/celestial.jpg";
 import { cn } from "@/lib/utils";
 import { fmt, pctChange, signed } from "@/lib/format";
@@ -473,7 +473,7 @@ export function Targets() {
 
 /* ---------- Data view: waste vs hunger, ranked boxes + column charts ---------- */
 
-const FLAGS = { IN, BR, KE, CA, GB };
+const FLAGS = { IN, KE, CA, GB };
 /** Series colours for the two columns (validated as a pair; every bar is direct-labelled). */
 export const SERIES = { waste: PALETTE[0], hunger: "#2F7A4F" };
 const CHART_H = 180;
@@ -771,7 +771,7 @@ function RateBars({ title, note, rows }: { title: string; note: string; rows: { 
   );
 }
 
-/** Overview: budget donut, pilot goal, 12-month plan and five country strategies. */
+/** Overview: budget donut, pilot goal, 12-month plan and country strategies. */
 export function PilotPlan() {
   const total = budget.reduce((t, b) => t + b.amount, 0);
   const size = 300;
@@ -843,7 +843,7 @@ export function PilotPlan() {
 
       <section className="rounded-2xl! border border-line bg-card p-5 sm:p-6">
         <h4 className="text-[14.5px] font-semibold text-fg">Country by country</h4>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {countries.map((c) => (
             <article key={c.country} className="flex flex-col rounded-xl! border border-line bg-frame/40 p-4">
               <div className="flex items-center gap-2.5">
@@ -1144,7 +1144,7 @@ export function buildFacts() {
   const start = supplyChain.rows[0].entering;
   const worst = [...supplyChain.rows].sort((a, b) => b.waste - a.waste)[0];
   return [
-    { label: "Food wasted · 5 countries", short: "Wasted", value: `${fmt(wasteTotal)} t`, note: `${waste.rows[0].country} alone: ${fmt(waste.rows[0].value ?? 0)} t`, icon: "leaf" as const },
+    { label: `Food wasted · ${waste.rows.length} countries`, short: "Wasted", value: `${fmt(wasteTotal)} t`, note: `${waste.rows[0].country} alone: ${fmt(waste.rows[0].value ?? 0)} t`, icon: "leaf" as const },
     { label: "Undernourished people", short: "Hungry", value: fmt(hungerTotal, "compact"), note: `${topShare.country}: ${topShare.share?.toFixed(1)}% of population`, icon: "users" as const },
     { label: "Lost from farm to fork", short: "Lost", value: `${Math.round((lost / start) * 100)}%`, note: `${fmt(lost)} t of ${fmt(start)} t`, icon: "activity" as const },
     { label: "Leakiest stage", short: worst.short, value: `${worst.waste}%`, note: `${worst.stage}: ${worst.lost} t lost`, icon: "target" as const },
@@ -1181,7 +1181,7 @@ export function buildInsights() {
     tag: "Waste",
     title: `${w1.country} wastes the most food`,
     figure: `${fmt(w1.value ?? 0)} t`,
-    body: `More than double ${w2.country} (${fmt(w2.value ?? 0)} t), the next highest. The five countries waste ${fmt(wasteTotal)} t a year between them.`,
+    body: `More than double ${w2.country} (${fmt(w2.value ?? 0)} t), the next highest. The ${waste.rows.length} countries waste ${fmt(wasteTotal)} t a year between them.`,
     tone: "bad",
   });
   const share = [...hunger.rows].sort((a, b) => (b.share ?? 0) - (a.share ?? 0))[0];
@@ -1311,7 +1311,7 @@ export function Insights() {
           {partners.map((p) => (
             <li key={p.name} className="flex items-center gap-4 rounded-xl! border border-line bg-frame/40 p-4">
               {p.logo ? (
-                <img src={celestialLogo} alt={`${p.name} logo`} className="size-14 shrink-0 rounded-full! object-cover" />
+                <img src={celestialLogo} alt={`${p.name} logo`} className="size-20 shrink-0 rounded-full! object-cover shadow-[0_8px_20px_-10px_rgba(60,0,10,0.6)]" />
               ) : (
                 p.flag && (
                   <span className="grid size-14 shrink-0 place-items-center rounded-full! bg-card shadow-[inset_0_0_0_1px_rgba(13,60,38,0.1)]">

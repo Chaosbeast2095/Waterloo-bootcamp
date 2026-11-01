@@ -175,8 +175,11 @@ export function ScrollIntro() {
           aria-hidden
           className="pointer-events-none absolute left-1/2 top-1/2 -z-10 size-[70vmin] -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(closest-side,rgba(226,114,91,0.14),transparent)]"
         />
-        <h1 ref={title} className="m-0 origin-[50%_50%] text-fg will-change-[transform,opacity]">
+        <h1 ref={title} className="m-0 flex origin-[50%_50%] flex-col items-center text-fg will-change-[transform,opacity]">
           <Logo className="w-[min(82vw,1080px)]" title={meta.product} />
+          <span className="mt-[clamp(1rem,3vw,2rem)] text-center font-display text-[clamp(1.05rem,2.6vw,1.9rem)] font-medium tracking-[-0.01em] text-fg/80">
+            {meta.tagline}
+          </span>
         </h1>
 
         <div
