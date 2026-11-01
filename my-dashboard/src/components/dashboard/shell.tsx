@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ArrowRight, Menu, X } from "lucide-react";
 import { useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
+import { Logo } from "./logo";
 import { fmt, pctChange, signed } from "@/lib/format";
 import { compareLabel, hero, intro, kpis, meta } from "@/data/dashboard";
 
@@ -16,11 +17,7 @@ export const VIEWS: { id: View; label: string }[] = [
 const clamp = (v: number, lo = 0, hi = 1) => Math.min(hi, Math.max(lo, v));
 
 export function Wordmark({ className }: { className?: string }) {
-  return (
-    <span className={cn("wordmark", className)}>
-      {meta.wordmark}
-    </span>
-  );
+  return <Logo className={cn("w-[104px]", className)} title={meta.product} />;
 }
 
 /* ---------- Navigation (from the SaaS template) ---------- */
@@ -56,7 +53,7 @@ export function Navigation({
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-line bg-page/80 backdrop-blur-md">
       <nav className="relative mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
-        <a href="#top" className="text-[15px] tracking-[0.26em] text-fg">
+        <a href="#top" className="text-fg">
           <Wordmark />
         </a>
         <div className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-8 md:flex">
@@ -175,12 +172,8 @@ export function ScrollIntro() {
           aria-hidden
           className="pointer-events-none absolute left-1/2 top-1/2 -z-10 size-[70vmin] -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(closest-side,rgba(226,114,91,0.14),transparent)]"
         />
-        <h1
-          ref={title}
-          className="wordmark m-0 origin-[50%_52%] whitespace-nowrap text-[clamp(4rem,19vw,17rem)] leading-none tracking-[0.06em] text-fg will-change-[transform,opacity]"
-          style={{ marginRight: "-0.06em" }}
-        >
-          {meta.wordmark}<span aria-hidden className="ml-[0.05em] inline-block size-[0.17em] bg-clay" />
+        <h1 ref={title} className="m-0 origin-[50%_50%] text-fg will-change-[transform,opacity]">
+          <Logo className="w-[min(82vw,1080px)]" title={meta.product} />
         </h1>
 
         <div
@@ -347,11 +340,7 @@ export function Footer() {
     <footer id="footer" className="bg-fg text-card">
       <div className="mx-auto grid max-w-7xl gap-10 px-6 py-14 md:grid-cols-[1.4fr_1fr_1fr]">
         <div>
-          <div className="whitespace-nowrap text-[clamp(2rem,4.4vw,3.6rem)] leading-none tracking-[0.08em]">
-            <span className="wordmark">
-              {meta.wordmark}<span aria-hidden className="ml-[0.05em] inline-block size-[0.17em] bg-clay" />
-            </span>
-          </div>
+          <Logo className="w-[min(70vw,300px)] text-card" title={meta.product} />
           <p className="mt-4 max-w-sm text-[13px] text-card/70">{meta.product} · built for the competition brief.</p>
         </div>
         <div className="text-[12.5px]">

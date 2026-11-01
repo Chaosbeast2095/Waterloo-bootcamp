@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Bell, ChevronDown, LayoutDashboard, LineChart, RotateCcw, Search, Sparkles, Table2 } from "lucide-react";
+import { Bell, ChevronDown, LayoutDashboard, RotateCcw, Search, Sparkles, Table2 } from "lucide-react";
+import { Mark } from "./logo";
 import { ChartLine } from "@/components/ui/chart-line";
 import { cn } from "@/lib/utils";
 import { breakdown, meta, notes, table, trend } from "@/data/dashboard";
@@ -47,7 +48,7 @@ export function AppFrame({
       <aside className="min-w-0 border-b border-line p-2.5 lg:border-b-0 lg:border-r lg:p-3">
         <div className="scroll-thin flex gap-1 overflow-x-auto lg:sticky lg:top-20 lg:grid lg:overflow-visible">
           <div className="mb-2 hidden items-center gap-2.5 border-b border-line px-2.5 pb-4 pt-2 text-[15px] font-semibold lg:flex">
-            <LineChart className="size-[18px] text-clay" />
+            <Mark className="size-6" />
             {meta.product}
           </div>
           {NAV.map((n) => (
